@@ -21,7 +21,7 @@ void main() async {
   await windowManager.ensureInitialized();
   
   WindowOptions windowOptions = const WindowOptions(
-    size: Size(500, 600),
+    size: Size(450, 600),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
@@ -395,7 +395,7 @@ class _MyHomePageState extends State<MyHomePage>
         break;
       case 3: 
         trendDisplayArrow = FluentIcons.forward;
-        trendColor = Colors.blue;
+        trendColor = SystemTheme.accentColor.accent;
         break;
       case 4: 
         trendDisplayArrow = FluentIcons.arrow_up_right;
@@ -775,7 +775,7 @@ class GlucoseChartPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final targetRange = Paint()
-      ..color = Colors.green.withOpacity(0.1)
+      ..color = SystemTheme.accentColor.accent.withOpacity(0.3)
       ..style = PaintingStyle.fill;
 
     final targetLowY = size.height - ((targetLow - minValue) / (maxValue - minValue)) * size.height;
@@ -787,7 +787,7 @@ class GlucoseChartPainter extends CustomPainter {
     );
 
     final targetLinePaint = Paint()
-      ..color = Colors.green.withOpacity(0.5)
+      ..color = SystemTheme.accentColor.accent
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -825,7 +825,7 @@ class GlucoseChartPainter extends CustomPainter {
       } else if (value > targetHigh) {
         pointColor = Colors.red;
       } else {
-        pointColor = Colors.green;
+        pointColor = SystemTheme.accentColor.accent;
       }
 
       pointPaint.color = pointColor;
