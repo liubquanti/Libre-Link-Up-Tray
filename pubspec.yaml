@@ -1,0 +1,32 @@
+name: libre_link_up_tray
+description: LibreLink Up Tray application for monitoring glucose levels
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  window_manager: ^0.3.7
+  tray_manager: ^0.2.0
+  http: ^1.1.0
+  shared_preferences: ^2.2.2
+  crypto: ^3.0.3
+  fluent_ui: ^4.12.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/tray/
+    - assets/tray/white/
+    - assets/tray/black/
