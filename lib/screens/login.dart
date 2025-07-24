@@ -85,32 +85,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return NavigationView(
-      appBar: NavigationAppBar(
-        title: const Text('Вхід до LibreLink'),
-        automaticallyImplyLeading: false,
-      ),
       content: ScaffoldPage(
         content: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: Icon(
-                    FluentIcons.health,
-                    size: 64,
-                    color: Colors.blue,
-                  ),
-                ),
-                
-                const SizedBox(height: 32),
                 
                 const Text(
                   'LibreLink Up Tray',
@@ -138,14 +120,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     placeholder: 'Введіть ваш email',
                     keyboardType: TextInputType.emailAddress,
-                    prefix: const Padding(
-                      padding: EdgeInsets.only(left: 8.0),
-                      child: Icon(FluentIcons.mail, size: 16),
-                    ),
                   ),
                 ),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 
                 InfoLabel(
                   label: 'Пароль',

@@ -17,6 +17,7 @@ void main() async {
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.normal,
+    minimumSize: Size(450, 550),
   );
   
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -257,8 +258,8 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
-      return NavigationView(
-        content: const ScaffoldPage(
+      return const NavigationView(
+        content: ScaffoldPage(
           content: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -279,32 +280,44 @@ class _MyHomePageState extends State<MyHomePage>
 
     return NavigationView(
       appBar: NavigationAppBar(
-        title: Text(widget.title),
-        actions: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            IconButton(
-              icon: Icon(_iconService.isDarkTheme ? FluentIcons.color_solid : FluentIcons.brightness),
-              onPressed: _toggleTheme,
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(FluentIcons.refresh),
-              onPressed: _updateGlucoseData,
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(FluentIcons.sign_out),
-              onPressed: _logout,
-            ),
-            const SizedBox(width: 8),
-          ],
+      automaticallyImplyLeading: false,
+      actions: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+        SizedBox(
+          height: 40,
+          width: 40,
+          child: IconButton(
+          icon: Icon(_iconService.isDarkTheme ? FluentIcons.color_solid : FluentIcons.brightness),
+          onPressed: _toggleTheme,
+          ),
         ),
+        SizedBox(
+          height: 40,
+          width: 40,
+          child: IconButton(
+          icon: const Icon(FluentIcons.refresh),
+          onPressed: _updateGlucoseData,
+          ),
+        ),
+        SizedBox(
+          height: 40,
+          width: 40,
+          child: IconButton(
+          icon: const Icon(FluentIcons.sign_out),
+          onPressed: _logout,
+          ),
+        ),
+        ],
+      ),
       ),
       content: ScaffoldPage(
-        content: _glucoseData == null
-            ? const Center(child: ProgressRing())
-            : _buildGlucoseDisplay(),
+      padding: EdgeInsets.zero,
+      content: Center(
+        child: _glucoseData == null
+        ? const ProgressRing()
+        : _buildGlucoseDisplay(),
+      ),
       ),
     );
   }
@@ -328,135 +341,95 @@ class _MyHomePageState extends State<MyHomePage>
     final isHigh = glucoseMeasurement['isHigh'];
     final isLow = glucoseMeasurement['isLow'];
 
-    String trendText = '';
     Color trendColor = Colors.grey;
+    IconData? trendDisplayArrow;
     switch (trendArrow) {
       case 1: 
-        trendText = '↓↓ Швидко падає';
+        trendDisplayArrow = FluentIcons.down;
         trendColor = Colors.red;
         break;
       case 2: 
-        trendText = '↓ Падає';
+        trendDisplayArrow = FluentIcons.arrow_down_right8;
         trendColor = Colors.orange;
         break;
       case 3: 
-        trendText = '→ Стабільно';
+        trendDisplayArrow = FluentIcons.forward;
         trendColor = Colors.blue;
         break;
       case 4: 
-        trendText = '↑ Зростає';
+        trendDisplayArrow = FluentIcons.arrow_up_right;
         trendColor = Colors.orange;
         break;
       case 5: 
-        trendText = '↑↑ Швидко зростає';
+        trendDisplayArrow = FluentIcons.up;
         trendColor = Colors.red;
         break;
     }
 
-    Color valueColor = Colors.green;
+    Color valueColor = FluentTheme.of(context).brightness == Brightness.dark 
+      ? Colors.white 
+      : Colors.black;
     if (isHigh) valueColor = Colors.red;
     if (isLow) valueColor = Colors.orange;
 
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Card(
-            padding: const EdgeInsets.all(32.0),
+          SizedBox(
+            width: double.infinity,
             child: Column(
               children: [
                 Text(
-                  '$value',
-                  style: TextStyle(
-                    fontSize: 84,
-                    fontWeight: FontWeight.bold,
-                    color: valueColor,
+                  '${connection['firstName']} ${connection['lastName']}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const Text(
-                  'mg/dL',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: trendColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: trendColor.withOpacity(0.3)),
-                  ),
-                  child: Text(
-                    trendText,
+                const SizedBox(height: 16),
+                const Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                    '$value',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: trendColor,
+                      fontSize: 84,
+                      fontWeight: FontWeight.bold,
+                      color: valueColor,
                     ),
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      children: [
+                        const Text(
+                          'mg/dL',
+                          style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        if (trendDisplayArrow != null) 
+                        Icon(
+                          trendDisplayArrow,
+                          color: trendColor,
+                          size: 24,
+                        ),
+                      ],
+                    )
+                  ],
                 ),
-                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 16),
                 Text(
                   'Останнє оновлення: $timestamp',
                   style: const TextStyle(
                     fontSize: 12,
                   ),
                   textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          Card(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                const Icon(FluentIcons.contact, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Пацієнт',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[100],
-                        ),
-                      ),
-                      Text(
-                        '${connection['firstName']} ${connection['lastName']}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          Card(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Icon(
-                  _iconService.isDarkTheme ? FluentIcons.color_solid : FluentIcons.brightness,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Тема іконки: ${_iconService.isDarkTheme ? 'Темна' : 'Світла'}',
-                  style: const TextStyle(fontSize: 14),
                 ),
               ],
             ),
