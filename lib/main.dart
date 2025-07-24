@@ -106,8 +106,11 @@ class _MyHomePageState extends State<MyHomePage>
   bool _isLoggedIn = false;
   Timer? _updateTimer;
   Timer? _themeCheckTimer;
+  Timer? _alertTimer;
   Map<String, dynamic>? _glucoseData;
   bool _isInitialized = false;
+  bool _isBlinking = false;
+  bool _showAlert = false;
   
   @override
   void initState() {
@@ -187,6 +190,64 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
+  bool _isGlucoseOutOfRange() {
+    if (_glucoseData == null) return false;
+    
+    final connection = _glucoseData!['connection'];
+    final glucoseMeasurement = connection['glucoseMeasurement'];
+    if (glucoseMeasurement == null) return false;
+    
+    final value = glucoseMeasurement['Value'] as int;
+    final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
+    final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
+    
+    return value < targetLow || value > targetHigh;
+  }
+
+  void _startBlinking() {
+    if (_isBlinking) return;
+    
+    _isBlinking = true;
+    _showAlert = true;
+    
+    _alertTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) async {
+      if (!_isGlucoseOutOfRange()) {
+        _stopBlinking();
+        return;
+      }
+      
+      setState(() {
+        _showAlert = !_showAlert;
+      });
+      
+      if (_showAlert) {
+        await trayManager.setIcon('assets/tray/alert.ico');
+      } else {
+        await _setNormalGlucoseIcon();
+      }
+    });
+  }
+
+  void _stopBlinking() {
+    _alertTimer?.cancel();
+    _alertTimer = null;
+    _isBlinking = false;
+    _showAlert = false;
+    _updateTrayIcon();
+  }
+
+  Future<void> _setNormalGlucoseIcon() async {
+    if (_glucoseData != null) {
+      final glucoseMeasurement = _glucoseData!['connection']['glucoseMeasurement'];
+      if (glucoseMeasurement != null) {
+        final value = glucoseMeasurement['Value'] as int;
+        final trendArrow = glucoseMeasurement['TrendArrow'] as int?;
+        final iconPath = await _iconService.getGlucoseIconPath(value, trendArrow);
+        await trayManager.setIcon(iconPath);
+      }
+    }
+  }
+
   Future<void> _updateTrayIcon() async {
     try {
       if (_glucoseData != null) {
@@ -204,9 +265,21 @@ class _MyHomePageState extends State<MyHomePage>
             case 5: trendText = '↓↓'; break;
           }
           
-          final iconPath = await _iconService.getGlucoseIconPath(value, trendArrow);
-          await trayManager.setIcon(iconPath);
-          await trayManager.setToolTip("Глюкоза: $value mg/dL $trendText");
+          await trayManager.setToolTip("$value mg/dL $trendText");
+          
+          // Check if glucose is out of range
+          if (_isGlucoseOutOfRange()) {
+            if (!_isBlinking) {
+              _startBlinking();
+            }
+          } else {
+            if (_isBlinking) {
+              _stopBlinking();
+            } else {
+              final iconPath = await _iconService.getGlucoseIconPath(value, trendArrow);
+              await trayManager.setIcon(iconPath);
+            }
+          }
           
           print('Updated tray icon with glucose: $value, trend: $trendText, theme: ${_iconService.isDarkTheme ? 'dark' : 'light'}');
         }
@@ -231,8 +304,8 @@ class _MyHomePageState extends State<MyHomePage>
       await trayManager.setToolTip("LibreLink Up Tray");
       
       try {
-        final iconPath = await _iconService.getGlucoseIconPath(100, 3);
-        await trayManager.setIcon(iconPath);
+        // Use loading icon instead of glucose icon when no data
+        await trayManager.setIcon('assets/tray/load.ico');
       } catch (iconError) {
         print('Warning: Could not set initial tray icon: $iconError');
       }
@@ -268,6 +341,7 @@ class _MyHomePageState extends State<MyHomePage>
   void _exitApp() {
     _updateTimer?.cancel();
     _themeCheckTimer?.cancel();
+    _alertTimer?.cancel();
     trayManager.destroy();
     windowManager.destroy();
   }
@@ -276,10 +350,16 @@ class _MyHomePageState extends State<MyHomePage>
     try {
       await _service.logout();
       _updateTimer?.cancel();
+      _alertTimer?.cancel();
       setState(() {
         _isLoggedIn = false;
         _glucoseData = null;
+        _isBlinking = false;
+        _showAlert = false;
       });
+      // Set loading icon when logged out
+      await trayManager.setIcon('assets/tray/load.ico');
+      await trayManager.setToolTip("LibreLink Up Tray");
     } catch (e) {
       print('Logout error: $e');
     }
@@ -514,6 +594,7 @@ class _MyHomePageState extends State<MyHomePage>
   void dispose() {
     _updateTimer?.cancel();
     _themeCheckTimer?.cancel();
+    _alertTimer?.cancel();
     windowManager.removeListener(this);
     trayManager.removeListener(this);
     super.dispose();

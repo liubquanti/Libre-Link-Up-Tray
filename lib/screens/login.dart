@@ -107,16 +107,21 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                
+                Image.asset(
+                  'assets/icon/icon.png',
+                  width: 80,
+                  height: 80,
+                ),
+                const SizedBox(height: 5),
                 const Text(
-                  'LibreLink Up Tray',
+                  'LibreLinkTray',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 
-                const SizedBox(height: 8),
+                const SizedBox(height: 5),
                 
                 Text(
                   'Увійдіть до свого облікового запису',
@@ -126,49 +131,56 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 
-                const SizedBox(height: 32),
-                
-                InfoLabel(
-                  label: 'Email',
-                  child: TextBox(
-                    controller: _emailController,
-                    placeholder: 'Введіть ваш email',
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                ),
-                
                 const SizedBox(height: 10),
-                
-                InfoLabel(
-                  label: 'Пароль',
-                  child: PasswordBox(
-                    controller: _passwordController,
-                    placeholder: 'Введіть ваш пароль',
 
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
                 SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : _login,
-                    child: _isLoading
-                        ? const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: ProgressRing(strokeWidth: 2),
-                              ),
-                              SizedBox(width: 8),
-                              Text('Увійти...'),
-                            ],
-                          )
-                        : const Text('Увійти'),
-                  ),
+                  width: 350,
+                  child: Column(
+                    children: [
+                      InfoLabel(
+                        label: 'Email',
+                        child: TextBox(
+                          controller: _emailController,
+                          placeholder: 'Введіть ваш email',
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 10),
+                      
+                      InfoLabel(
+                        label: 'Пароль',
+                        child: PasswordBox(
+                          controller: _passwordController,
+                          placeholder: 'Введіть ваш пароль',
+
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: _isLoading ? null : _login,
+                          child: _isLoading
+                              ? const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: ProgressRing(strokeWidth: 2),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text('Увійти...'),
+                                  ],
+                                )
+                              : const Text('Увійти'),
+                        ),
+                      ),
+                    ]
+                  )
                 ),
               ],
             ),
