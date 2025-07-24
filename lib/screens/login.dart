@@ -15,7 +15,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  String? _errorMessage;
 
   final LibreLinkService _service = LibreLinkService();
 
@@ -47,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     print('=== LoginScreen: Attempting manual login ===');
@@ -70,14 +68,30 @@ class _LoginScreenState extends State<LoginScreen> {
         widget.onLoginSuccess();
       } else {
         print('LoginScreen: Login successful but failed to get connections');
-        setState(() {
-          _errorMessage = 'Успішний вхід, але не вдалося отримати з\'єднання. Перевірте налаштування акаунта.';
+        await displayInfoBar(context, builder: (context, close) {
+          return InfoBar(
+            title: const Text('Помилка з\'єднання'),
+            content: const Text('Успішний вхід, але не вдалося отримати з\'єднання. Перевірте налаштування акаунта.'),
+            action: IconButton(
+              icon: const Icon(FluentIcons.clear),
+              onPressed: close,
+            ),
+            severity: InfoBarSeverity.error,
+          );
         });
       }
     } else {
       print('LoginScreen: Login failed');
-      setState(() {
-        _errorMessage = 'Невірний email або пароль';
+      await displayInfoBar(context, builder: (context, close) {
+        return InfoBar(
+          title: const Text('Помилка входу'),
+          content: const Text('Невірний email або пароль'),
+          action: IconButton(
+            icon: const Icon(FluentIcons.clear),
+            onPressed: close,
+          ),
+          severity: InfoBarSeverity.error,
+        );
       });
     }
   }
@@ -136,38 +150,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 const SizedBox(height: 24),
                 
-                if (_errorMessage != null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.red.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(FluentIcons.error_badge, color: Colors.red, size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _errorMessage!,
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _isLoading ? null : _login,
                     child: _isLoading
-                        ? Row(
+                        ? const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               SizedBox(
                                 width: 16,
                                 height: 16,
@@ -180,25 +170,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         : const Text('Увійти'),
                   ),
                 ),
-                
-                const SizedBox(height: 24),
-                
-                if (_service.currentAuthToken != null)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Debug: Auth token exists, User ID: ${_service.currentUserId}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[130],
-                        fontFamily: 'Consolas',
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
