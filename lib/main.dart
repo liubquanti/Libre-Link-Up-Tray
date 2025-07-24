@@ -424,16 +424,15 @@ class _MyHomePageState extends State<MyHomePage>
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
-          
+          const SizedBox(height: 10),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: FluentTheme.of(context).brightness == Brightness.dark
-                  ? Colors.grey[160]
+                  ? const Color(0xFF2B2B2B)
                   : Colors.grey[20],
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
               children: [
@@ -479,7 +478,7 @@ class _MyHomePageState extends State<MyHomePage>
             ),
           ),
           
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
           
           if (graphData != null && graphData.isNotEmpty) ...[
             Container(
@@ -487,9 +486,9 @@ class _MyHomePageState extends State<MyHomePage>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: FluentTheme.of(context).brightness == Brightness.dark
-                    ? Colors.grey[160]
+                    ? const Color(0xFF2B2B2B)
                     : Colors.grey[20],
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
