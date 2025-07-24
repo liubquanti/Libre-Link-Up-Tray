@@ -25,6 +25,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   flutter_launcher_icons: ^0.14.4
+  msix: ^3.16.9
 
 flutter:
   uses-material-design: true
@@ -41,3 +42,11 @@ flutter_launcher_icons:
     generate: true
     image_path: "assets/icon/icon.png"
     icon_size: 48
+
+msix_config:
+  display_name: LibreLinkTray
+  publisher_display_name: liubquanti
+  identity_name: liubquanti.libre.link
+  msix_version: 1.0.0.0
+  logo_path: assets/icon/icon.png
+  capabilities: internetClient

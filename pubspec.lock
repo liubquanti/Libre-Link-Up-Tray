@@ -73,6 +73,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.19.1"
+  console:
+    dependency: transitive
+    description:
+      name: console
+      sha256: e04e7824384c5b39389acdd6dc7d33f3efe6b232f6f16d7626f194f6a01ad69a
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.0"
   crypto:
     dependency: "direct main"
     description:
@@ -149,6 +157,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  get_it:
+    dependency: transitive
+    description:
+      name: get_it
+      sha256: d85128a5dae4ea777324730dc65edd9c9f43155c109d5cc0a69cab74139fbac1
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.7.0"
   http:
     dependency: "direct main"
     description:
@@ -261,6 +277,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.16.0"
+  msix:
+    dependency: "direct dev"
+    description:
+      name: msix
+      sha256: edde648a8133bf301883c869d19d127049683037c65ff64173ba526ac7a8af2f
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.16.9"
+  package_config:
+    dependency: transitive
+    description:
+      name: package_config
+      sha256: f096c55ebb7deb7e384101542bfba8c52696c1b56fca2eb62827989ef2353bbc
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.0"
   path:
     dependency: transitive
     description:
@@ -325,6 +357,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.3"
+  pub_semver:
+    dependency: transitive
+    description:
+      name: pub_semver
+      sha256: "5bfcf68ca79ef689f8990d1160781b4bad40a3bd5e5218ad4076ddb7f4081585"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.0"
   recase:
     dependency: transitive
     description:
