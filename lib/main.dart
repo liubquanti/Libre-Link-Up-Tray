@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'services/api.dart';
 import 'services/icons.dart';
 import 'screens/login.dart';
@@ -12,12 +13,12 @@ void main() async {
   await windowManager.ensureInitialized();
   
   WindowOptions windowOptions = const WindowOptions(
-    size: Size(450, 550),
+    size: Size(500, 700),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.normal,
-    minimumSize: Size(450, 550),
+    minimumSize: Size(450, 600),
   );
   
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -280,44 +281,42 @@ class _MyHomePageState extends State<MyHomePage>
 
     return NavigationView(
       appBar: NavigationAppBar(
-      automaticallyImplyLeading: false,
-      actions: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-        SizedBox(
-          height: 40,
-          width: 40,
-          child: IconButton(
-          icon: Icon(_iconService.isDarkTheme ? FluentIcons.color_solid : FluentIcons.brightness),
-          onPressed: _toggleTheme,
-          ),
+        automaticallyImplyLeading: false,
+        actions: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: IconButton(
+                icon: Icon(_iconService.isDarkTheme ? FluentIcons.color_solid : FluentIcons.brightness),
+                onPressed: _toggleTheme,
+              ),
+            ),
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: IconButton(
+                icon: const Icon(FluentIcons.refresh),
+                onPressed: _updateGlucoseData,
+              ),
+            ),
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: IconButton(
+                icon: const Icon(FluentIcons.sign_out),
+                onPressed: _logout,
+              ),
+            ),
+          ],
         ),
-        SizedBox(
-          height: 40,
-          width: 40,
-          child: IconButton(
-          icon: const Icon(FluentIcons.refresh),
-          onPressed: _updateGlucoseData,
-          ),
-        ),
-        SizedBox(
-          height: 40,
-          width: 40,
-          child: IconButton(
-          icon: const Icon(FluentIcons.sign_out),
-          onPressed: _logout,
-          ),
-        ),
-        ],
-      ),
       ),
       content: ScaffoldPage(
-      padding: EdgeInsets.zero,
-      content: Center(
-        child: _glucoseData == null
-        ? const ProgressRing()
-        : _buildGlucoseDisplay(),
-      ),
+        padding: EdgeInsets.zero,
+        content: _glucoseData == null
+            ? const Center(child: ProgressRing())
+            : _buildGlucoseDisplay(),
       ),
     );
   }
@@ -325,6 +324,7 @@ class _MyHomePageState extends State<MyHomePage>
   Widget _buildGlucoseDisplay() {
     final connection = _glucoseData!['connection'];
     final glucoseMeasurement = connection['glucoseMeasurement'];
+    final graphData = _glucoseData!['graphData'] as List?;
     
     if (glucoseMeasurement == null) {
       return const Center(
@@ -367,73 +367,107 @@ class _MyHomePageState extends State<MyHomePage>
     }
 
     Color valueColor = FluentTheme.of(context).brightness == Brightness.dark 
-      ? Colors.white 
-      : Colors.black;
+        ? Colors.white 
+        : Colors.black;
     if (isHigh) valueColor = Colors.red;
     if (isLow) valueColor = Colors.orange;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
+          // Patient info
+          Text(
+            '${connection['firstName']} ${connection['lastName']}',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Current glucose value
+          Container(
             width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[160]
+                  : Colors.grey[20],
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Column(
               children: [
-                Text(
-                  '${connection['firstName']} ${connection['lastName']}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                    '$value',
-                    style: TextStyle(
-                      fontSize: 84,
-                      fontWeight: FontWeight.bold,
-                      color: valueColor,
+                      '$value',
+                      style: TextStyle(
+                        fontSize: 64,
+                        fontWeight: FontWeight.bold,
+                        color: valueColor,
+                      ),
                     ),
-                    ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Column(
                       children: [
                         const Text(
                           'mg/dL',
                           style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         if (trendDisplayArrow != null) 
-                        Icon(
-                          trendDisplayArrow,
-                          color: trendColor,
-                          size: 24,
-                        ),
+                          Icon(
+                            trendDisplayArrow,
+                            color: trendColor,
+                            size: 24,
+                          ),
                       ],
                     )
                   ],
                 ),
-                const Divider(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Text(
                   'Останнє оновлення: $timestamp',
-                  style: const TextStyle(
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(fontSize: 12),
                   textAlign: TextAlign.center,
                 ),
               ],
             ),
           ),
+          
+          const SizedBox(height: 20),
+          
+          // Glucose chart
+          if (graphData != null && graphData.isNotEmpty) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[160]
+                    : Colors.grey[20],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 200,
+                    child: GlucoseChart(
+                      data: graphData,
+                      targetLow: connection['targetLow']?.toDouble() ?? 70.0,
+                      targetHigh: connection['targetHigh']?.toDouble() ?? 180.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -447,4 +481,146 @@ class _MyHomePageState extends State<MyHomePage>
     trayManager.removeListener(this);
     super.dispose();
   }
+}
+
+class GlucoseChart extends StatelessWidget {
+  final List<dynamic> data;
+  final double targetLow;
+  final double targetHigh;
+
+  const GlucoseChart({
+    super.key,
+    required this.data,
+    required this.targetLow,
+    required this.targetHigh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.isEmpty) return const SizedBox();
+
+    final points = data.map((item) {
+      final value = (item['Value'] as num).toDouble();
+      return value;
+    }).toList();
+
+    final minValue = math.min(points.reduce(math.min) - 20, targetLow - 20);
+    final maxValue = math.max(points.reduce(math.max) + 20, targetHigh + 20);
+
+    return CustomPaint(
+      size: Size.infinite,
+      painter: GlucoseChartPainter(
+        points: points,
+        minValue: minValue,
+        maxValue: maxValue,
+        targetLow: targetLow,
+        targetHigh: targetHigh,
+        isDark: FluentTheme.of(context).brightness == Brightness.dark,
+      ),
+    );
+  }
+}
+
+class GlucoseChartPainter extends CustomPainter {
+  final List<double> points;
+  final double minValue;
+  final double maxValue;
+  final double targetLow;
+  final double targetHigh;
+  final bool isDark;
+
+  GlucoseChartPainter({
+    required this.points,
+    required this.minValue,
+    required this.maxValue,
+    required this.targetLow,
+    required this.targetHigh,
+    required this.isDark,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final pointPaint = Paint()
+      ..style = PaintingStyle.fill;
+
+    final targetRange = Paint()
+      ..color = Colors.green.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    final targetLowY = size.height - ((targetLow - minValue) / (maxValue - minValue)) * size.height;
+    final targetHighY = size.height - ((targetHigh - minValue) / (maxValue - minValue)) * size.height;
+
+    canvas.drawRect(
+      Rect.fromLTRB(0, targetHighY, size.width, targetLowY),
+      targetRange,
+    );
+
+    final targetLinePaint = Paint()
+      ..color = Colors.green.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    canvas.drawLine(Offset(0, targetLowY), Offset(size.width, targetLowY), targetLinePaint);
+    canvas.drawLine(Offset(0, targetHighY), Offset(size.width, targetHighY), targetLinePaint);
+
+    if (points.isEmpty) return;
+
+    final stepX = size.width / (points.length - 1);
+    final positions = <Offset>[];
+
+    for (int i = 0; i < points.length; i++) {
+      final x = i * stepX;
+      final y = size.height - ((points[i] - minValue) / (maxValue - minValue)) * size.height;
+      positions.add(Offset(x, y));
+    }
+
+    final path = Path();
+    if (positions.isNotEmpty) {
+      path.moveTo(positions.first.dx, positions.first.dy);
+      for (int i = 1; i < positions.length; i++) {
+        path.lineTo(positions[i].dx, positions[i].dy);
+      }
+    }
+
+    paint.color = isDark ? Colors.white : Colors.blue;
+    canvas.drawPath(path, paint);
+
+    for (int i = 0; i < positions.length; i++) {
+      final value = points[i];
+      Color pointColor;
+      
+      if (value < targetLow) {
+        pointColor = Colors.orange;
+      } else if (value > targetHigh) {
+        pointColor = Colors.red;
+      } else {
+        pointColor = Colors.green;
+      }
+
+      pointPaint.color = pointColor;
+      canvas.drawCircle(positions[i], 3, pointPaint);
+    }
+
+    final gridPaint = Paint()
+      ..color = (isDark ? Colors.white : Colors.grey).withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5;
+
+    for (int i = 0; i <= 5; i++) {
+      final y = (size.height / 5) * i;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    for (int i = 0; i <= 6; i++) {
+      final x = (size.width / 6) * i;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
