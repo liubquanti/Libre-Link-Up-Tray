@@ -1,6 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
+import 'package:system_theme/system_theme.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'services/api.dart';
@@ -9,6 +11,12 @@ import 'screens/login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Configure system theme
+  if (defaultTargetPlatform.supportsAccentColor) {
+    SystemTheme.fallbackColor = Colors.blue;
+    await SystemTheme.accentColor.load();
+  }
   
   await windowManager.ensureInitialized();
   
@@ -30,20 +38,53 @@ void main() async {
   runApp(const MainApp());
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
   @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Listen for system theme changes
+    SystemTheme.onChange.listen((event) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Convert system accent color to FluentUI AccentColor
+    final systemAccent = AccentColor.swatch({
+      'darkest': SystemTheme.accentColor.darkest,
+      'darker': SystemTheme.accentColor.darker,
+      'dark': SystemTheme.accentColor.dark,
+      'normal': SystemTheme.accentColor.accent,
+      'light': SystemTheme.accentColor.light,
+      'lighter': SystemTheme.accentColor.lighter,
+      'lightest': SystemTheme.accentColor.lightest,
+    });
+
     return FluentApp(
       title: 'LibreLink Up Tray',
       theme: FluentThemeData(
         brightness: Brightness.light,
-        accentColor: Colors.blue,
+        accentColor: systemAccent,
+        visualDensity: VisualDensity.standard,
+        focusTheme: FocusThemeData(
+          glowFactor: is10footScreen(context) ? 2.0 : 0.0,
+        ),
       ),
       darkTheme: FluentThemeData(
         brightness: Brightness.dark,
-        accentColor: Colors.blue,
+        accentColor: systemAccent,
+        visualDensity: VisualDensity.standard,
+        focusTheme: FocusThemeData(
+          glowFactor: is10footScreen(context) ? 2.0 : 0.0,
+        ),
       ),
       home: const MyHomePage(title: 'LibreLink Up Tray'),
     );
