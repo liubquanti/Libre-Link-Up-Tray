@@ -13,7 +13,7 @@ void main() async {
   await windowManager.ensureInitialized();
   
   WindowOptions windowOptions = const WindowOptions(
-    size: Size(500, 700),
+    size: Size(500, 600),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
@@ -370,13 +370,12 @@ class _MyHomePageState extends State<MyHomePage>
         ? Colors.white 
         : Colors.black;
     if (isHigh) valueColor = Colors.red;
-    if (isLow) valueColor = Colors.orange;
+    if (isLow) valueColor = Colors.red;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          // Patient info
           Text(
             '${connection['firstName']} ${connection['lastName']}',
             style: const TextStyle(
@@ -386,7 +385,6 @@ class _MyHomePageState extends State<MyHomePage>
           ),
           const SizedBox(height: 16),
           
-          // Current glucose value
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -442,7 +440,6 @@ class _MyHomePageState extends State<MyHomePage>
           
           const SizedBox(height: 20),
           
-          // Glucose chart
           if (graphData != null && graphData.isNotEmpty) ...[
             Container(
               width: double.infinity,
@@ -458,7 +455,7 @@ class _MyHomePageState extends State<MyHomePage>
                 children: [
                   SizedBox(
                     height: 200,
-                    child: GlucoseChart(
+                    child: InteractiveGlucoseChart(
                       data: graphData,
                       targetLow: connection['targetLow']?.toDouble() ?? 70.0,
                       targetHigh: connection['targetHigh']?.toDouble() ?? 180.0,
@@ -483,12 +480,12 @@ class _MyHomePageState extends State<MyHomePage>
   }
 }
 
-class GlucoseChart extends StatelessWidget {
+class InteractiveGlucoseChart extends StatefulWidget {
   final List<dynamic> data;
   final double targetLow;
   final double targetHigh;
 
-  const GlucoseChart({
+  const InteractiveGlucoseChart({
     super.key,
     required this.data,
     required this.targetLow,
@@ -496,28 +493,215 @@ class GlucoseChart extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    if (data.isEmpty) return const SizedBox();
+  State<InteractiveGlucoseChart> createState() => _InteractiveGlucoseChartState();
+}
 
-    final points = data.map((item) {
+class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
+  Offset? _hoveredPoint;
+  String? _hoveredValue;
+  String? _hoveredTime;
+  Size? _containerSize;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.data.isEmpty) return const SizedBox();
+
+    final points = widget.data.map((item) {
       final value = (item['Value'] as num).toDouble();
       return value;
     }).toList();
 
-    final minValue = math.min(points.reduce(math.min) - 20, targetLow - 20);
-    final maxValue = math.max(points.reduce(math.max) + 20, targetHigh + 20);
+    final minValue = math.min(points.reduce(math.min) - 20, widget.targetLow - 20);
+    final maxValue = math.max(points.reduce(math.max) + 20, widget.targetHigh + 20);
 
-    return CustomPaint(
-      size: Size.infinite,
-      painter: GlucoseChartPainter(
-        points: points,
-        minValue: minValue,
-        maxValue: maxValue,
-        targetLow: targetLow,
-        targetHigh: targetHigh,
-        isDark: FluentTheme.of(context).brightness == Brightness.dark,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _containerSize = Size(constraints.maxWidth, constraints.maxHeight);
+        
+        return Stack(
+          children: [
+            MouseRegion(
+              onHover: (event) {
+                _updateHoveredPoint(event.localPosition, points, minValue, maxValue);
+              },
+              onExit: (event) {
+                setState(() {
+                  _hoveredPoint = null;
+                  _hoveredValue = null;
+                  _hoveredTime = null;
+                });
+              },
+              child: CustomPaint(
+                size: Size.infinite,
+                painter: GlucoseChartPainter(
+                  points: points,
+                  minValue: minValue,
+                  maxValue: maxValue,
+                  targetLow: widget.targetLow,
+                  targetHigh: widget.targetHigh,
+                  isDark: FluentTheme.of(context).brightness == Brightness.dark,
+                  hoveredPoint: _hoveredPoint,
+                ),
+              ),
+            ),
+            
+            if (_hoveredPoint != null && _hoveredValue != null && _hoveredTime != null && _containerSize != null)
+              Positioned(
+                left: _calculateTooltipLeft(),
+                top: _calculateTooltipTop(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: FluentTheme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[180]
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: FluentTheme.of(context).brightness == Brightness.dark
+                          ? Colors.grey[120]
+                          : Colors.grey[80],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$_hoveredValue mg/dL',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _hoveredTime!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey[100],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
+  }
+
+  double _calculateTooltipLeft() {
+    const tooltipWidth = 90.0;
+    const margin = 10.0;
+    
+    if (_hoveredPoint!.dx + tooltipWidth + margin > _containerSize!.width) {
+      return _hoveredPoint!.dx - tooltipWidth - margin;
+    } else {
+      return _hoveredPoint!.dx + margin;
+    }
+  }
+
+  double _calculateTooltipTop() {
+    const tooltipHeight = 50.0;
+    const margin = 10.0;
+    
+    if (_hoveredPoint!.dy - tooltipHeight - margin < 0) {
+      return _hoveredPoint!.dy + margin;
+    } else {
+      return _hoveredPoint!.dy - tooltipHeight - margin;
+    }
+  }
+
+  void _updateHoveredPoint(Offset position, List<double> points, double minValue, double maxValue) {
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    
+    if (position.dx < 0 || position.dx > size.width) return;
+    
+    final stepX = size.width / (points.length - 1);
+    final pointIndex = (position.dx / stepX).round().clamp(0, points.length - 1);
+    
+    final x = pointIndex * stepX;
+    final y = size.height - ((points[pointIndex] - minValue) / (maxValue - minValue)) * size.height;
+    
+    final dataItem = widget.data[pointIndex];
+    final value = points[pointIndex].toInt();
+    final timestamp = dataItem['Timestamp'] as String? ?? 
+                     dataItem['FactoryTimestamp'] as String? ?? 
+                     'Невідомо';
+    
+    setState(() {
+      _hoveredPoint = Offset(x, y);
+      _hoveredValue = value.toString();
+      _hoveredTime = _formatTimestamp(timestamp);
+    });
+  }
+
+  String _formatTimestamp(String timestamp) {
+    try {
+      DateTime? dateTime;
+      
+      try {
+        dateTime = DateTime.parse(timestamp);
+      } catch (e) {
+        final parts = timestamp.split(' ');
+        if (parts.length >= 2) {
+          final datePart = parts[0];
+          final timePart = parts[1];
+          final amPm = parts.length > 2 ? parts[2] : '';
+          
+          final dateComponents = datePart.split('/');
+          if (dateComponents.length == 3) {
+            final month = int.parse(dateComponents[0]);
+            final day = int.parse(dateComponents[1]);
+            final year = int.parse(dateComponents[2]);
+            
+            final timeComponents = timePart.split(':');
+            if (timeComponents.length >= 2) {
+              var hour = int.parse(timeComponents[0]);
+              final minute = int.parse(timeComponents[1]);
+              
+              if (amPm.toUpperCase() == 'PM' && hour != 12) {
+                hour += 12;
+              } else if (amPm.toUpperCase() == 'AM' && hour == 12) {
+                hour = 0;
+              }
+              
+              dateTime = DateTime(year, month, day, hour, minute);
+            }
+          }
+        }
+      }
+      
+      if (dateTime != null) {
+        final hour = dateTime.hour.toString().padLeft(2, '0');
+        final minute = dateTime.minute.toString().padLeft(2, '0');
+        final day = dateTime.day.toString().padLeft(2, '0');
+        final month = dateTime.month.toString().padLeft(2, '0');
+        
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final measurementDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+        
+        if (measurementDate.isAtSameMomentAs(today)) {
+          return '$hour:$minute';
+        } else {
+          return '$day.$month $hour:$minute';
+        }
+      }
+    } catch (e) {
+      print('Error parsing timestamp: $e');
+    }
+    
+    return timestamp;
   }
 }
 
@@ -528,6 +712,7 @@ class GlucoseChartPainter extends CustomPainter {
   final double targetLow;
   final double targetHigh;
   final bool isDark;
+  final Offset? hoveredPoint;
 
   GlucoseChartPainter({
     required this.points,
@@ -536,6 +721,7 @@ class GlucoseChartPainter extends CustomPainter {
     required this.targetLow,
     required this.targetHigh,
     required this.isDark,
+    this.hoveredPoint,
   });
 
   @override
@@ -594,7 +780,7 @@ class GlucoseChartPainter extends CustomPainter {
       Color pointColor;
       
       if (value < targetLow) {
-        pointColor = Colors.orange;
+        pointColor = Colors.red;
       } else if (value > targetHigh) {
         pointColor = Colors.red;
       } else {
@@ -603,6 +789,25 @@ class GlucoseChartPainter extends CustomPainter {
 
       pointPaint.color = pointColor;
       canvas.drawCircle(positions[i], 3, pointPaint);
+    }
+
+    if (hoveredPoint != null) {
+      final hoverPaint = Paint()
+        ..color = (isDark ? Colors.white : Colors.blue).withOpacity(0.3)
+        ..style = PaintingStyle.fill;
+      
+      canvas.drawCircle(hoveredPoint!, 6, hoverPaint);
+      
+      final hoverLinePaint = Paint()
+        ..color = (isDark ? Colors.white : Colors.blue).withOpacity(0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1;
+      
+      canvas.drawLine(
+        Offset(hoveredPoint!.dx, 0),
+        Offset(hoveredPoint!.dx, size.height),
+        hoverLinePaint,
+      );
     }
 
     final gridPaint = Paint()
