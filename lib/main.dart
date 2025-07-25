@@ -39,12 +39,12 @@ void main() async {
   await windowManager.ensureInitialized();
   
   WindowOptions windowOptions = const WindowOptions(
-    size: Size(450, 600),
+    size: Size(450, 545),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.normal,
-    minimumSize: Size(450, 600),
+    minimumSize: Size(450, 545),
   );
   
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -327,11 +327,11 @@ class _MyHomePageState extends State<MyHomePage>
           
           String trendText = '';
           switch (trendArrow) {
-            case 1: trendText = '🡑'; break;
-            case 2: trendText = '🡕'; break;
+            case 1: trendText = '🡓'; break;
+            case 2: trendText = '🡖'; break;
             case 3: trendText = '🡒'; break;
-            case 4: trendText = '🡖'; break;
-            case 5: trendText = '🡓'; break;
+            case 4: trendText = '🡕'; break;
+            case 5: trendText = '🡑'; break;
           }
           
           await trayManager.setToolTip("$value mg/dL $trendText");
@@ -585,7 +585,7 @@ class _MyHomePageState extends State<MyHomePage>
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
