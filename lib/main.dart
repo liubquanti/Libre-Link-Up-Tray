@@ -575,7 +575,7 @@ class _MyHomePageState extends State<MyHomePage>
     if (isLow) valueColor = Colors.red;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 26.0),
       child: Column(
         children: [
           Text(
@@ -591,8 +591,14 @@ class _MyHomePageState extends State<MyHomePage>
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: FluentTheme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF2B2B2B)
-                  : Colors.grey[20],
+                ? const Color(0xFF2B2B2B)
+                : Colors.grey[20],
+              border: Border.all(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1d1d1d)
+                : Colors.grey[40],
+              width: 1,
+              ),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -639,7 +645,7 @@ class _MyHomePageState extends State<MyHomePage>
             ),
           ),
           
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           
           if (graphData != null && graphData.isNotEmpty) ...[
             Container(
@@ -647,8 +653,14 @@ class _MyHomePageState extends State<MyHomePage>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: FluentTheme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF2B2B2B)
-                    : Colors.grey[20],
+                  ? const Color(0xFF2B2B2B)
+                  : Colors.grey[20],
+                border: Border.all(
+                color: FluentTheme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1d1d1d)
+                  : Colors.grey[40],
+                width: 1,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
