@@ -48,8 +48,7 @@ void main() async {
   );
   
   windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
+    // Don't show window on startup - will be controlled by app logic
   });
   
   windowManager.setPreventClose(true);
@@ -130,6 +129,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool _isBlinking = false;
   bool _showAlert = false;
   bool _autoStartEnabled = false;
+  bool _hasShownWindowOnStartup = false;
   
   @override
   void initState() {
@@ -147,11 +147,24 @@ class _MyHomePageState extends State<MyHomePage>
       setState(() {
         _isInitialized = true;
       });
+      
+      // Show window only if not logged in
+      if (!_isLoggedIn && !_hasShownWindowOnStartup) {
+        _hasShownWindowOnStartup = true;
+        await windowManager.show();
+        await windowManager.focus();
+      }
     } catch (e) {
       print('Initialization error: $e');
       setState(() {
         _isInitialized = true;
       });
+      // Show window on error
+      if (!_hasShownWindowOnStartup) {
+        _hasShownWindowOnStartup = true;
+        await windowManager.show();
+        await windowManager.focus();
+      }
     }
   }
 
@@ -213,6 +226,7 @@ class _MyHomePageState extends State<MyHomePage>
       if (success) {
         final connections = await _service.getConnections();
         if (connections != null) {
+          print('LoginScreen: Auto login successful - running in background');
           setState(() {
             _isLoggedIn = true;
           });
@@ -416,6 +430,9 @@ class _MyHomePageState extends State<MyHomePage>
       // Set loading icon when logged out
       await trayManager.setIcon('assets/tray/load.ico');
       await trayManager.setToolTip("LibreLink Up Tray");
+      
+      // Show login screen when logging out
+      _showWindow();
     } catch (e) {
       print('Logout error: $e');
     }
