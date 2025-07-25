@@ -86,23 +86,23 @@ class SimpleIconService {
         
         switch (trendArrow) {
           case 1: 
-            arrowText = '↑↑'; 
+            arrowText = '🡑'; 
             arrowColor = Colors.red;
             break;
           case 2: 
-            arrowText = '↑'; 
+            arrowText = '🡕'; 
             arrowColor = Colors.orange;
             break;
           case 3: 
-            arrowText = '→'; 
+            arrowText = '🡒'; 
             arrowColor = textColor;
             break;
           case 4: 
-            arrowText = '↓'; 
+            arrowText = '🡖'; 
             arrowColor = Colors.blue;
             break;
           case 5: 
-            arrowText = '↓↓'; 
+            arrowText = '🡓'; 
             arrowColor = Colors.purple;
             break;
         }

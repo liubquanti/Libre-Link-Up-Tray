@@ -327,11 +327,11 @@ class _MyHomePageState extends State<MyHomePage>
           
           String trendText = '';
           switch (trendArrow) {
-            case 1: trendText = '↑↑'; break;
-            case 2: trendText = '↑'; break;
-            case 3: trendText = '→'; break;
-            case 4: trendText = '↓'; break;
-            case 5: trendText = '↓↓'; break;
+            case 1: trendText = '🡑'; break;
+            case 2: trendText = '🡕'; break;
+            case 3: trendText = '🡒'; break;
+            case 4: trendText = '🡖'; break;
+            case 5: trendText = '🡓'; break;
           }
           
           await trayManager.setToolTip("$value mg/dL $trendText");
