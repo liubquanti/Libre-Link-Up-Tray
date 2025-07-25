@@ -3,7 +3,10 @@ import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:flutter/foundation.dart';
+import 'package:launch_at_startup/launch_at_startup.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 import 'services/api.dart';
 import 'services/icons.dart';
@@ -16,6 +19,21 @@ void main() async {
   if (defaultTargetPlatform.supportsAccentColor) {
     SystemTheme.fallbackColor = Colors.blue;
     await SystemTheme.accentColor.load();
+  }
+  
+  // Setup launch at startup
+  PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  
+  launchAtStartup.setup(
+    appName: packageInfo.appName,
+    appPath: Platform.resolvedExecutable,
+    packageName: 'liubquanti.librelink.tray',
+  );
+  
+  // Enable auto-start by default
+  bool isEnabled = await launchAtStartup.isEnabled();
+  if (!isEnabled) {
+    await launchAtStartup.enable();
   }
   
   await windowManager.ensureInitialized();
@@ -111,6 +129,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool _isInitialized = false;
   bool _isBlinking = false;
   bool _showAlert = false;
+  bool _autoStartEnabled = false;
   
   @override
   void initState() {
@@ -124,6 +143,7 @@ class _MyHomePageState extends State<MyHomePage>
       windowManager.addListener(this);
       await _checkLoginStatus();
       _startThemeMonitoring();
+      await _checkAutoStartStatus();
       setState(() {
         _isInitialized = true;
       });
@@ -131,6 +151,41 @@ class _MyHomePageState extends State<MyHomePage>
       print('Initialization error: $e');
       setState(() {
         _isInitialized = true;
+      });
+    }
+  }
+
+  Future<void> _checkAutoStartStatus() async {
+    try {
+      final isEnabled = await launchAtStartup.isEnabled();
+      setState(() {
+        _autoStartEnabled = isEnabled;
+      });
+    } catch (e) {
+      print('Error checking auto-start status: $e');
+    }
+  }
+
+  Future<void> _toggleAutoStart() async {
+    try {
+      if (_autoStartEnabled) {
+        await launchAtStartup.disable();
+      } else {
+        await launchAtStartup.enable();
+      }
+      await _checkAutoStartStatus();
+    } catch (e) {
+      print('Error toggling auto-start: $e');
+      await displayInfoBar(context, builder: (context, close) {
+        return InfoBar(
+          title: const Text('Помилка'),
+          content: const Text('Не вдалося змінити налаштування автозапуску'),
+          action: IconButton(
+            icon: const Icon(FluentIcons.clear),
+            onPressed: close,
+          ),
+          severity: InfoBarSeverity.error,
+        );
       });
     }
   }
@@ -316,6 +371,7 @@ class _MyHomePageState extends State<MyHomePage>
             MenuItem(label: "Показати додаток", onClick: (menuItem) => _showWindow()),
             MenuItem(label: "Оновити дані", onClick: (menuItem) => _updateGlucoseData()),
             MenuItem(label: "Перемкнути тему", onClick: (menuItem) => _toggleTheme()),
+            MenuItem(label: _autoStartEnabled ? "Вимкнути автозапуск" : "Увімкнути автозапуск", onClick: (menuItem) => _toggleAutoStart()),
             MenuItem(label: "Вийти з акаунта", onClick: (menuItem) => _logout()),
             MenuItem(label: "Закрити", onClick: (menuItem) => _exitApp()),
           ],
@@ -412,6 +468,14 @@ class _MyHomePageState extends State<MyHomePage>
               child: IconButton(
                 icon: Icon(_iconService.isDarkTheme ? FluentIcons.color_solid : FluentIcons.brightness),
                 onPressed: _toggleTheme,
+              ),
+            ),
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: IconButton(
+                icon: Icon(_autoStartEnabled ? FluentIcons.play_solid : FluentIcons.play),
+                onPressed: _toggleAutoStart,
               ),
             ),
             SizedBox(
