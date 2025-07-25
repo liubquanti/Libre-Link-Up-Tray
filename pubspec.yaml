@@ -1,5 +1,5 @@
 name: libre_link_up_tray
-description: LibreLink Up Tray application for monitoring glucose levels
+description: LibreLinkUpTray application for monitoring glucose levels
 
 publish_to: 'none'
 
@@ -46,10 +46,10 @@ flutter_launcher_icons:
     icon_size: 48
 
 msix_config:
-  display_name: LibreLinkTray
+  display_name: LibreLinkUpTray
   publisher_display_name: liubquanti
   publisher: liubquanti
-  identity_name: liubquanti.librelink.tray
+  identity_name: liubquanti.librelinkup.tray
   msix_version: 1.0.0.0
   logo_path: assets/icon/icon.png
   capabilities: internetClient

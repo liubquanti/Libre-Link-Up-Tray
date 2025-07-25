@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 5),
                 const Text(
-                  'LibreLinkTray',
+                  'LibreLinkUpTray',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,

@@ -27,7 +27,7 @@ void main() async {
   launchAtStartup.setup(
     appName: packageInfo.appName,
     appPath: Platform.resolvedExecutable,
-    packageName: 'liubquanti.librelink.tray',
+    packageName: 'liubquanti.librelinkup.tray',
   );
   
   // Enable auto-start by default
@@ -86,7 +86,7 @@ class _MainAppState extends State<MainApp> {
     });
 
     return FluentApp(
-      title: 'LibreLink Up Tray',
+      title: 'LibreLinkUpTray',
       theme: FluentThemeData(
         brightness: Brightness.light,
         accentColor: systemAccent,
@@ -103,7 +103,7 @@ class _MainAppState extends State<MainApp> {
           glowFactor: is10footScreen(context) ? 2.0 : 0.0,
         ),
       ),
-      home: const MyHomePage(title: 'LibreLink Up Tray'),
+      home: const MyHomePage(title: 'LibreLinkUpTray'),
     );
   }
 }
@@ -370,7 +370,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> _initTray() async {
     try {
-      await trayManager.setToolTip("LibreLink Up Tray");
+      await trayManager.setToolTip("LibreLinkUpTray");
       
       try {
         // Use loading icon instead of glucose icon when no data
@@ -429,7 +429,7 @@ class _MyHomePageState extends State<MyHomePage>
       });
       // Set loading icon when logged out
       await trayManager.setIcon('assets/tray/load.ico');
-      await trayManager.setToolTip("LibreLink Up Tray");
+      await trayManager.setToolTip("LibreLinkUpTray");
       
       // Show login screen when logging out
       _showWindow();
