@@ -21,6 +21,7 @@ dependencies:
   system_theme: ^3.1.2
   launch_at_startup: ^0.5.1
   package_info_plus: ^8.3.0
+  local_notifier: ^0.1.6
 
 dev_dependencies:
   flutter_test:

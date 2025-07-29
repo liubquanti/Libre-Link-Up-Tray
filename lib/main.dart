@@ -5,6 +5,7 @@ import 'package:system_theme/system_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -21,6 +22,12 @@ void main() async {
     SystemTheme.fallbackColor = Colors.blue;
     await SystemTheme.accentColor.load();
   }
+  
+  // Setup notifications
+  await localNotifier.setup(
+    appName: 'LibreLinkUpTray',
+    shortcutPolicy: ShortcutPolicy.requireCreate,
+  );
   
   // Setup launch at startup
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -133,6 +140,11 @@ class _MyHomePageState extends State<MyHomePage>
   bool _hasShownWindowOnStartup = false;
   bool _showSettings = false;
   
+  // Notification tracking
+  bool _wasOutOfRange = false;
+  int? _lastGlucoseValue;
+  bool _notificationsEnabled = true;
+  
   @override
   void initState() {
     super.initState();
@@ -212,6 +224,12 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
+  void _toggleNotifications() {
+    setState(() {
+      _notificationsEnabled = !_notificationsEnabled;
+    });
+  }
+
   void _startThemeMonitoring() {
     _themeCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _checkThemeChange();
@@ -261,11 +279,92 @@ class _MyHomePageState extends State<MyHomePage>
         setState(() {
           _glucoseData = data;
         });
+        await _checkForNotifications();
         await _updateTrayIcon();
       }
     } catch (e) {
       print('Update glucose data error: $e');
     }
+  }
+
+  Future<void> _checkForNotifications() async {
+    if (!_notificationsEnabled || _glucoseData == null) return;
+
+    final connection = _glucoseData!['connection'];
+    final glucoseMeasurement = connection['glucoseMeasurement'];
+    if (glucoseMeasurement == null) return;
+
+    final value = glucoseMeasurement['Value'] as int;
+    final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
+    final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
+    final firstName = connection['firstName'] ?? 'Користувач';
+
+    final isCurrentlyOutOfRange = value < targetLow || value > targetHigh;
+
+    // Check if this is the first measurement
+    if (_lastGlucoseValue == null) {
+      _lastGlucoseValue = value;
+      _wasOutOfRange = isCurrentlyOutOfRange;
+      return;
+    }
+
+    // Check if status changed
+    if (_wasOutOfRange != isCurrentlyOutOfRange) {
+      if (isCurrentlyOutOfRange) {
+        // Glucose went out of range
+        await _showGlucoseAlert(value, targetLow, targetHigh, firstName, true);
+      } else {
+        // Glucose returned to normal range
+        await _showGlucoseAlert(value, targetLow, targetHigh, firstName, false);
+      }
+    } else if (isCurrentlyOutOfRange && _lastGlucoseValue != value) {
+      // Still out of range but value changed significantly
+      final difference = (value - _lastGlucoseValue!).abs();
+      if (difference >= 20) { // Alert if change is 20 mg/dL or more
+        await _showGlucoseAlert(value, targetLow, targetHigh, firstName, true);
+      }
+    }
+
+    _lastGlucoseValue = value;
+    _wasOutOfRange = isCurrentlyOutOfRange;
+  }
+
+  Future<void> _showGlucoseAlert(int value, double targetLow, double targetHigh, String firstName, bool isOutOfRange) async {
+    String title;
+    String body;
+    
+    if (isOutOfRange) {
+      if (value < targetLow) {
+        title = '⚠️ Низький рівень глюкози';
+        body = '$firstName: $value mg/dL (норма: ${targetLow.toInt()}-${targetHigh.toInt()})';
+      } else {
+        title = '⚠️ Високий рівень глюкози';
+        body = '$firstName: $value mg/dL (норма: ${targetLow.toInt()}-${targetHigh.toInt()})';
+      }
+    } else {
+      title = '✅ Глюкоза в нормі';
+      body = '$firstName: $value mg/dL';
+    }
+
+    final notification = LocalNotification(
+      title: title,
+      body: body,
+    );
+
+    notification.onShow = () {
+      print('Notification shown: $title');
+    };
+
+    notification.onClick = () {
+      print('Notification clicked: $title');
+      _showWindow();
+    };
+
+    notification.onClose = (closeReason) {
+      print('Notification closed: $title - $closeReason');
+    };
+
+    await notification.show();
   }
 
   bool _isGlucoseOutOfRange() {
@@ -384,6 +483,7 @@ class _MyHomePageState extends State<MyHomePage>
           MenuItem(label: "Показати додаток", onClick: (menuItem) => _showWindow()),
           MenuItem(label: "Оновити дані", onClick: (menuItem) => _updateGlucoseData()),
           MenuItem(label: "Перемкнути тему", onClick: (menuItem) => _toggleTheme()),
+          MenuItem(label: _notificationsEnabled ? "Вимкнути сповіщення" : "Увімкнути сповіщення", onClick: (menuItem) => _toggleNotifications()),
           MenuItem(label: _autoStartEnabled ? "Вимкнути автозапуск" : "Увімкнути автозапуск", onClick: (menuItem) => _toggleAutoStart()),
           MenuItem(label: "Вийти з акаунта", onClick: (menuItem) => _logout()),
           MenuItem(label: "Закрити", onClick: (menuItem) => _exitApp()),
@@ -440,6 +540,8 @@ class _MyHomePageState extends State<MyHomePage>
         _isBlinking = false;
         _showAlert = false;
         _showSettings = false;
+        _wasOutOfRange = false;
+        _lastGlucoseValue = null;
       });
       // Set loading icon when logged out
       await trayManager.setIcon('assets/tray/load.ico');
@@ -609,8 +711,10 @@ class _MyHomePageState extends State<MyHomePage>
                   ? SettingsScreen(
                       autoStartEnabled: _autoStartEnabled,
                       isDarkTheme: _iconService.isDarkTheme,
+                      notificationsEnabled: _notificationsEnabled,
                       onToggleAutoStart: _toggleAutoStart,
                       onToggleTheme: _toggleTheme,
+                      onToggleNotifications: _toggleNotifications,
                       onRefresh: _updateGlucoseData,
                       onLogout: _logout,
                     )

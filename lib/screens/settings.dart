@@ -3,8 +3,10 @@ import 'package:fluent_ui/fluent_ui.dart';
 class SettingsScreen extends StatelessWidget {
   final bool autoStartEnabled;
   final bool isDarkTheme;
+  final bool notificationsEnabled;
   final VoidCallback onToggleAutoStart;
   final VoidCallback onToggleTheme;
+  final VoidCallback onToggleNotifications;
   final VoidCallback onRefresh;
   final VoidCallback onLogout;
 
@@ -12,8 +14,10 @@ class SettingsScreen extends StatelessWidget {
     super.key,
     required this.autoStartEnabled,
     required this.isDarkTheme,
+    required this.notificationsEnabled,
     required this.onToggleAutoStart,
     required this.onToggleTheme,
+    required this.onToggleNotifications,
     required this.onRefresh,
     required this.onLogout,
   });
@@ -74,6 +78,53 @@ class SettingsScreen extends StatelessWidget {
                 ToggleSwitch(
                   checked: autoStartEnabled,
                   onChanged: (value) => onToggleAutoStart(),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Сповіщення
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: theme.brightness == Brightness.dark
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.black.withOpacity(0.08),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  notificationsEnabled ? FluentIcons.ringer : FluentIcons.ringer_off,
+                  color: theme.accentColor,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Push-сповіщення',
+                        style: theme.typography.body?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Сповіщення при зміні рівня глюкози',
+                        style: theme.typography.caption,
+                      ),
+                    ],
+                  ),
+                ),
+                ToggleSwitch(
+                  checked: notificationsEnabled,
+                  onChanged: (value) => onToggleNotifications(),
                 ),
               ],
             ),
