@@ -514,8 +514,8 @@ class _MyHomePageState extends State<MyHomePage>
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: theme.brightness == Brightness.dark 
-                          ? Colors.white.withOpacity(0.8)
-                          : Colors.black.withOpacity(0.8),
+                          ? Colors.white
+                          : Colors.black,
                       ),
                       ),
                     ],
@@ -675,6 +675,24 @@ class _MyHomePageState extends State<MyHomePage>
     if (isHigh) valueColor = Colors.red;
     if (isLow) valueColor = Colors.red;
 
+    // Combine graph data with current measurement
+    List<dynamic> combinedData = [];
+    if (graphData != null) {
+      combinedData.addAll(graphData);
+    }
+    
+    // Add current measurement as the last point if it's not already there
+    if (combinedData.isEmpty || 
+        combinedData.last['Value'] != value || 
+        combinedData.last['Timestamp'] != timestamp) {
+      combinedData.add({
+        'Value': value,
+        'Timestamp': timestamp,
+        'FactoryTimestamp': timestamp,
+        'isCurrent': true, // Mark as current measurement
+      });
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 26.0),
       child: Column(
@@ -749,7 +767,7 @@ class _MyHomePageState extends State<MyHomePage>
           
           const SizedBox(height: 8),
           
-          if (graphData != null && graphData.isNotEmpty) ...[
+          if (combinedData.isNotEmpty) ...[
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -771,7 +789,7 @@ class _MyHomePageState extends State<MyHomePage>
                   SizedBox(
                     height: 200,
                     child: InteractiveGlucoseChart(
-                      data: graphData,
+                      data: combinedData,
                       targetLow: connection['targetLow']?.toDouble() ?? 70.0,
                       targetHigh: connection['targetHigh']?.toDouble() ?? 180.0,
                     ),
@@ -851,6 +869,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                 size: Size.infinite,
                 painter: GlucoseChartPainter(
                   points: points,
+                  data: widget.data, // Pass the full data
                   minValue: minValue,
                   maxValue: maxValue,
                   targetLow: widget.targetLow,
@@ -889,12 +908,17 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '$_hoveredValue mg/dL',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '$_hoveredValue mg/dL',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -1023,6 +1047,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
 
 class GlucoseChartPainter extends CustomPainter {
   final List<double> points;
+  final List<dynamic> data; // Add data to access isCurrent flag
   final double minValue;
   final double maxValue;
   final double targetLow;
@@ -1032,6 +1057,7 @@ class GlucoseChartPainter extends CustomPainter {
 
   GlucoseChartPainter({
     required this.points,
+    required this.data,
     required this.minValue,
     required this.maxValue,
     required this.targetLow,
@@ -1093,6 +1119,8 @@ class GlucoseChartPainter extends CustomPainter {
 
     for (int i = 0; i < positions.length; i++) {
       final value = points[i];
+      final isCurrent = data.length > i && data[i]['isCurrent'] == true;
+      
       Color pointColor;
       
       if (value < targetLow) {
@@ -1104,7 +1132,19 @@ class GlucoseChartPainter extends CustomPainter {
       }
 
       pointPaint.color = pointColor;
-      canvas.drawCircle(positions[i], 3, pointPaint);
+      
+      // Draw larger point for current measurement
+      final pointRadius = isCurrent ? 5.0 : 3.0;
+      canvas.drawCircle(positions[i], pointRadius, pointPaint);
+      
+      // Add ring around current measurement
+      if (isCurrent) {
+        final ringPaint = Paint()
+          ..color = pointColor.withOpacity(0.3)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3;
+        canvas.drawCircle(positions[i], 8, ringPaint);
+      }
     }
 
     if (hoveredPoint != null) {
