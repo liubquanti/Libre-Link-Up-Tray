@@ -11,6 +11,7 @@ import 'dart:math' as math;
 import 'services/api.dart';
 import 'services/icons.dart';
 import 'screens/login.dart';
+import 'screens/settings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +44,7 @@ void main() async {
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.normal,
+    titleBarStyle: TitleBarStyle.hidden,
     minimumSize: Size(450, 545),
   );
   
@@ -130,6 +131,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool _showAlert = false;
   bool _autoStartEnabled = false;
   bool _hasShownWindowOnStartup = false;
+  bool _showSettings = false;
   
   @override
   void initState() {
@@ -437,6 +439,7 @@ class _MyHomePageState extends State<MyHomePage>
         _glucoseData = null;
         _isBlinking = false;
         _showAlert = false;
+        _showSettings = false;
       });
       // Set loading icon when logged out
       await trayManager.setIcon('assets/tray/load.ico');
@@ -463,75 +466,160 @@ class _MyHomePageState extends State<MyHomePage>
     trayManager.popUpContextMenu();
   }
 
+  Widget _buildCustomTitleBar() {
+    final theme = FluentTheme.of(context);
+    
+    return Container(
+      height: 35,
+      decoration: BoxDecoration(
+        color: theme.micaBackgroundColor,
+        border: Border(
+          bottom: BorderSide(
+            color: theme.brightness == Brightness.dark 
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.08),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Draggable area - expanded to fill all available space
+          Expanded(
+            child: GestureDetector(
+              onPanStart: (details) {
+                windowManager.startDragging();
+              },
+              onTapDown: (details) {
+                // Handle double tap to maximize/restore
+              },
+              child: Container(
+                height: 32,
+                width: double.infinity, // Take full width
+                padding: const EdgeInsets.only(left: 10),
+                color: Colors.transparent, // Make sure it captures gestures
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                    child: Row(
+                    children: [
+                      Image.asset(
+                      'assets/icon/icon.png',
+                      width: 16,
+                      height: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                      'LibreLinkUpTray',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: theme.brightness == Brightness.dark 
+                          ? Colors.white.withOpacity(0.8)
+                          : Colors.black.withOpacity(0.8),
+                      ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Controls area (non-draggable)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_isLoggedIn) ...[
+                Container(
+                  width: 45,
+                  height: 32,
+                  child: IconButton(
+                    icon: Icon(
+                      _showSettings ? FluentIcons.home : FluentIcons.settings,
+                      size: 13,
+                      color: const Color(0xFFe9d9d8),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showSettings = !_showSettings;
+                      });
+                    },
+                  ),
+                ),
+              ],
+              WindowCaptionButton.minimize(
+                brightness: theme.brightness,
+                onPressed: () => windowManager.minimize(),
+              ),
+              WindowCaptionButton.close(
+                brightness: theme.brightness,
+                onPressed: () => windowManager.hide(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
-      return const NavigationView(
-        content: ScaffoldPage(
-          content: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ProgressRing(),
-                SizedBox(height: 16),
-                Text('Ініціалізація...'),
-              ],
+      return NavigationView(
+        content: Column(
+          children: [
+            _buildCustomTitleBar(),
+            const Expanded(
+              child: ScaffoldPage(
+                content: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ProgressRing(),
+                      SizedBox(height: 16),
+                      Text('Ініціалізація...'),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       );
     }
 
     if (!_isLoggedIn) {
-      return LoginScreen(onLoginSuccess: _onLoginSuccess);
+      return Column(
+        children: [
+          _buildCustomTitleBar(),
+          Expanded(
+            child: LoginScreen(onLoginSuccess: _onLoginSuccess),
+          ),
+        ],
+      );
     }
 
     return NavigationView(
-      appBar: NavigationAppBar(
-        automaticallyImplyLeading: false,
-        actions: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: IconButton(
-                icon: Icon(_iconService.isDarkTheme ? FluentIcons.color_solid : FluentIcons.brightness),
-                onPressed: _toggleTheme,
-              ),
+      content: Column(
+        children: [
+          _buildCustomTitleBar(),
+          Expanded(
+            child: ScaffoldPage(
+              padding: EdgeInsets.zero,
+              content: _showSettings 
+                  ? SettingsScreen(
+                      autoStartEnabled: _autoStartEnabled,
+                      isDarkTheme: _iconService.isDarkTheme,
+                      onToggleAutoStart: _toggleAutoStart,
+                      onToggleTheme: _toggleTheme,
+                      onRefresh: _updateGlucoseData,
+                      onLogout: _logout,
+                    )
+                  : _glucoseData == null
+                      ? const Center(child: ProgressRing())
+                      : _buildGlucoseDisplay(),
             ),
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: IconButton(
-                icon: Icon(_autoStartEnabled ? FluentIcons.play_solid : FluentIcons.play),
-                onPressed: _toggleAutoStart,
-              ),
-            ),
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: IconButton(
-                icon: const Icon(FluentIcons.refresh),
-                onPressed: _updateGlucoseData,
-              ),
-            ),
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: IconButton(
-                icon: const Icon(FluentIcons.sign_out),
-                onPressed: _logout,
-              ),
-            ),
-          ],
-        ),
-      ),
-      content: ScaffoldPage(
-        padding: EdgeInsets.zero,
-        content: _glucoseData == null
-            ? const Center(child: ProgressRing())
-            : _buildGlucoseDisplay(),
+          ),
+        ],
       ),
     );
   }
@@ -591,6 +679,7 @@ class _MyHomePageState extends State<MyHomePage>
       padding: const EdgeInsets.symmetric(horizontal: 26.0),
       child: Column(
         children: [
+          const SizedBox(height: 10),
           Text(
             '${connection['firstName']} ${connection['lastName']}',
             style: const TextStyle(
