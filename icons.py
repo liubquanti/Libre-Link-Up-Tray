@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 
 size = (16, 16)
-font_size = 11
+font_size = 12
 base_output_dir = "assets/tray"
 themes = {
     "black": "black",
@@ -29,13 +29,16 @@ for i in range(1, 501):
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
         x = (size[0] - text_width) // 2
+        y = (size[1] - text_height) // 2 - 1
 
-        ascent, descent = font.getmetrics()
-        y_offset = bbox[1]
-        y = (size[1] - (ascent + descent)) // 2 - y_offset + 4
-
-
-        draw.text((x, y), text, font=font, fill=color)
+        draw.text(
+            (x, y),
+            text,
+            font=font,
+            fill=color,
+            stroke_width=0.2,
+            stroke_fill=color
+        )
 
         output_path = os.path.join(base_output_dir, theme, f"{i}.ico")
         img.save(output_path, format="ICO")

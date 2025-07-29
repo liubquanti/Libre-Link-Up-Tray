@@ -153,6 +153,10 @@ class _MyHomePageState extends State<MyHomePage>
         _hasShownWindowOnStartup = true;
         await windowManager.show();
         await windowManager.focus();
+      } else if (_isLoggedIn) {
+        // Hide window if already logged in
+        print('Already logged in - keeping window hidden');
+        await windowManager.hide();
       }
     } catch (e) {
       print('Initialization error: $e');
@@ -187,6 +191,9 @@ class _MyHomePageState extends State<MyHomePage>
         await launchAtStartup.enable();
       }
       await _checkAutoStartStatus();
+      
+      // Update tray context menu
+      await _updateTrayContextMenu();
     } catch (e) {
       print('Error toggling auto-start: $e');
       await displayInfoBar(context, builder: (context, close) {
@@ -226,7 +233,7 @@ class _MyHomePageState extends State<MyHomePage>
       if (success) {
         final connections = await _service.getConnections();
         if (connections != null) {
-          print('LoginScreen: Auto login successful - running in background');
+          print('Auto login successful - running in background');
           setState(() {
             _isLoggedIn = true;
           });
@@ -368,6 +375,21 @@ class _MyHomePageState extends State<MyHomePage>
     _showWindow();
   }
 
+  Future<void> _updateTrayContextMenu() async {
+    await trayManager.setContextMenu(
+      Menu(
+        items: [
+          MenuItem(label: "Показати додаток", onClick: (menuItem) => _showWindow()),
+          MenuItem(label: "Оновити дані", onClick: (menuItem) => _updateGlucoseData()),
+          MenuItem(label: "Перемкнути тему", onClick: (menuItem) => _toggleTheme()),
+          MenuItem(label: _autoStartEnabled ? "Вимкнути автозапуск" : "Увімкнути автозапуск", onClick: (menuItem) => _toggleAutoStart()),
+          MenuItem(label: "Вийти з акаунта", onClick: (menuItem) => _logout()),
+          MenuItem(label: "Закрити", onClick: (menuItem) => _exitApp()),
+        ],
+      ),
+    );
+  }
+
   Future<void> _initTray() async {
     try {
       await trayManager.setToolTip("LibreLinkUpTray");
@@ -379,18 +401,7 @@ class _MyHomePageState extends State<MyHomePage>
         print('Warning: Could not set initial tray icon: $iconError');
       }
       
-      await trayManager.setContextMenu(
-        Menu(
-          items: [
-            MenuItem(label: "Показати додаток", onClick: (menuItem) => _showWindow()),
-            MenuItem(label: "Оновити дані", onClick: (menuItem) => _updateGlucoseData()),
-            MenuItem(label: "Перемкнути тему", onClick: (menuItem) => _toggleTheme()),
-            MenuItem(label: _autoStartEnabled ? "Вимкнути автозапуск" : "Увімкнути автозапуск", onClick: (menuItem) => _toggleAutoStart()),
-            MenuItem(label: "Вийти з акаунта", onClick: (menuItem) => _logout()),
-            MenuItem(label: "Закрити", onClick: (menuItem) => _exitApp()),
-          ],
-        ),
-      );
+      await _updateTrayContextMenu();
       trayManager.addListener(this);
     } catch (e) {
       print('Error initializing tray: $e');
@@ -443,6 +454,8 @@ class _MyHomePageState extends State<MyHomePage>
       _isLoggedIn = true;
     });
     _startPeriodicUpdate();
+    // Hide window after successful login
+    windowManager.hide();
   }
 
   @override
