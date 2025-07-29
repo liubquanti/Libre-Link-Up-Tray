@@ -802,11 +802,14 @@ class _MyHomePageState extends State<MyHomePage>
       child: Column(
         children: [
           const SizedBox(height: 10),
-          Text(
-            '${connection['firstName']} ${connection['lastName']}',
-            style: const TextStyle(
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '${connection['firstName']} ${connection['lastName']}',
+              style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(height: 8),

@@ -27,34 +27,41 @@ class SettingsScreen extends StatelessWidget {
     final theme = FluentTheme.of(context);
     
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 26.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          
+          const SizedBox(height: 10),
+          const Text(
             'Налаштування',
-            style: theme.typography.title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          
-          const SizedBox(height: 24),
-          
+          const SizedBox(height: 8),
           // Автозапуск
           Container(
-            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(8),
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2B2B2B)
+                : Colors.grey[20],
               border: Border.all(
-                color: theme.brightness == Brightness.dark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.08),
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1d1d1d)
+                : Colors.grey[40],
+              width: 1,
               ),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
                 Icon(
-                  autoStartEnabled ? FluentIcons.play_solid : FluentIcons.play,
-                  color: theme.accentColor,
+                  autoStartEnabled ? FluentIcons.play : FluentIcons.play,
+                  color: Colors.white,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -64,7 +71,7 @@ class SettingsScreen extends StatelessWidget {
                       Text(
                         'Автозапуск',
                         style: theme.typography.body?.copyWith(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -83,25 +90,29 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           
           // Сповіщення
           Container(
-            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(8),
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2B2B2B)
+                : Colors.grey[20],
               border: Border.all(
-                color: theme.brightness == Brightness.dark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.08),
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1d1d1d)
+                : Colors.grey[40],
+              width: 1,
               ),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
                 Icon(
                   notificationsEnabled ? FluentIcons.ringer : FluentIcons.ringer_off,
-                  color: theme.accentColor,
+                  color: Colors.white,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -111,7 +122,7 @@ class SettingsScreen extends StatelessWidget {
                       Text(
                         'Push-сповіщення',
                         style: theme.typography.body?.copyWith(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -130,25 +141,29 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           
           // Тема
           Container(
-            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(8),
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2B2B2B)
+                : Colors.grey[20],
               border: Border.all(
-                color: theme.brightness == Brightness.dark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.08),
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1d1d1d)
+                : Colors.grey[40],
+              width: 1,
               ),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
                 Icon(
-                  isDarkTheme ? FluentIcons.color_solid : FluentIcons.brightness,
-                  color: theme.accentColor,
+                  isDarkTheme ? FluentIcons.color : FluentIcons.brightness,
+                  color: Colors.white,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -158,7 +173,7 @@ class SettingsScreen extends StatelessWidget {
                       Text(
                         'Темна тема іконок',
                         style: theme.typography.body?.copyWith(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -177,48 +192,50 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
           
-          Text(
-            'Дії',
-            style: theme.typography.subtitle,
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Оновити дані
           Container(
             width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 12),
-            child: Button(
-              onPressed: onRefresh,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(FluentIcons.refresh, size: 16),
-                  SizedBox(width: 8),
-                  Text('Оновити дані'),
-                ],
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2B2B2B)
+                : Colors.grey[20],
+              border: Border.all(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1d1d1d)
+                : Colors.grey[40],
+              width: 1,
               ),
+              borderRadius: BorderRadius.circular(8),
             ),
-          ),
-          
-          // Вийти з акаунта
-          Container(
-            width: double.infinity,
-            child: FilledButton(
-              style: ButtonStyle(
-                backgroundColor: WidgetStatePropertyAll(Colors.red),
-              ),
-              onPressed: onLogout,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(FluentIcons.sign_out, size: 16, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Вийти з акаунта', style: TextStyle(color: Colors.white)),
-                ],
-              ),
+            child: Column(
+              children: [
+                // Оновити дані
+                Container(
+                  width: double.infinity,
+                  height: 35,
+                  child: Button(
+                    onPressed: onRefresh,
+                    child: Text('Оновити дані'),
+                  ),
+                ),
+                
+                const SizedBox(height: 10),
+
+                // Вийти з акаунта
+                Container(
+                  width: double.infinity,
+                  height: 35,
+                  child: FilledButton(
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(Colors.red.darker),
+                    ),
+                    onPressed: onLogout,
+                    child: Text('Вийти з акаунта', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
