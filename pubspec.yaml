@@ -33,6 +33,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/sensors/
     - assets/tray/
     - assets/tray/white/
     - assets/tray/black/

@@ -732,6 +732,7 @@ class _MyHomePageState extends State<MyHomePage>
     final connection = _glucoseData!['connection'];
     final glucoseMeasurement = connection['glucoseMeasurement'];
     final graphData = _glucoseData!['graphData'] as List?;
+    final activeSensors = _glucoseData!['activeSensors'] as List?;
     
     if (glucoseMeasurement == null) {
       return const Center(
@@ -800,6 +801,12 @@ class _MyHomePageState extends State<MyHomePage>
         'FactoryTimestamp': timestamp,
         'isCurrent': true, // Mark as current measurement
       });
+    }
+
+    // Get the first active sensor for display
+    Map<String, dynamic>? currentSensor;
+    if (activeSensors != null && activeSensors.isNotEmpty) {
+      currentSensor = activeSensors.first;
     }
 
     return SingleChildScrollView(
@@ -921,6 +928,143 @@ class _MyHomePageState extends State<MyHomePage>
               ),
             ),
           ],
+
+          const SizedBox(height: 8),
+
+          if (currentSensor != null) ...[
+            _buildSensorWidget(currentSensor),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSensorWidget(Map<String, dynamic> sensorData) {
+    final sensor = sensorData['sensor'] as Map<String, dynamic>;
+    final device = sensorData['device'] as Map<String, dynamic>?;
+    
+    final pt = sensor['pt'] as int? ?? 4;
+    final sn = sensor['sn'] as String? ?? 'Unknown';
+    final activationTimestamp = sensor['a'] as int?;
+    final isActive = device?['s'] as bool? ?? true; // Default to true if not specified
+    
+    // Determine sensor image and name based on pt value
+    String sensorImage;
+    String sensorName;
+    switch (pt) {
+      case 3:
+        sensorImage = 'assets/sensors/sensor2.png';
+        sensorName = 'Libre 2 Sensor';
+        break;
+      case 4:
+        sensorImage = 'assets/sensors/sensor3.png';
+        sensorName = 'Libre 3 Sensor';
+        break;
+      default:
+        sensorImage = 'assets/sensors/sensor2.png';
+        sensorName = 'Libre Sensor';
+    }
+    
+    // Calculate activation date
+    String activationDate = 'Невідомо';
+    int daysSinceActivation = 0;
+    if (activationTimestamp != null) {
+      final activationDateTime = DateTime.fromMillisecondsSinceEpoch(activationTimestamp * 1000);
+      final now = DateTime.now();
+      daysSinceActivation = now.difference(activationDateTime).inDays;
+      activationDate = '${activationDateTime.day.toString().padLeft(2, '0')}.${activationDateTime.month.toString().padLeft(2, '0')}.${activationDateTime.year} ${activationDateTime.hour.toString().padLeft(2, '0')}:${activationDateTime.minute.toString().padLeft(2, '0')}';
+    }
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: FluentTheme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF2B2B2B)
+          : Colors.grey[20],
+        border: Border.all(
+        color: FluentTheme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1d1d1d)
+          : Colors.grey[40],
+        width: 1,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Image.asset(
+                sensorImage,
+                height: 80,
+                width: 80,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: isActive ? Colors.green : Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          sensorName,
+                          style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      sn,
+                      style: const TextStyle(
+                      fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      activationDate,
+                      style: const TextStyle(
+                      fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+            // Sensor duration indicators (14 days total lifespan)
+            LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(14, (index) {
+                final isActive = index < 14 - daysSinceActivation;
+                return Container(
+                width: (constraints.maxWidth - 13 * 5) / 14,
+                decoration: BoxDecoration(
+                  color: isActive 
+                  ? SystemTheme.accentColor.accent
+                  : Colors.grey[140],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                height: 10,
+                );
+              }),
+              );
+            },
+            ),
         ],
       ),
     );
