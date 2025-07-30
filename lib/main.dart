@@ -753,11 +753,11 @@ class _MyHomePageState extends State<MyHomePage>
     switch (trendArrow) {
       case 1: 
         trendDisplayArrow = FluentIcons.down;
-        trendColor = Colors.red;
+        trendColor = Colors.red.darker;
         break;
       case 2: 
         trendDisplayArrow = FluentIcons.arrow_down_right8;
-        trendColor = Colors.orange;
+        trendColor = Colors.red.darker;
         break;
       case 3: 
         trendDisplayArrow = FluentIcons.forward;
@@ -765,19 +765,19 @@ class _MyHomePageState extends State<MyHomePage>
         break;
       case 4: 
         trendDisplayArrow = FluentIcons.arrow_up_right;
-        trendColor = Colors.orange;
+        trendColor = Colors.red.darker;
         break;
       case 5: 
         trendDisplayArrow = FluentIcons.up;
-        trendColor = Colors.red;
+        trendColor = Colors.red.darker;
         break;
     }
 
     Color valueColor = FluentTheme.of(context).brightness == Brightness.dark 
         ? Colors.white 
         : Colors.black;
-    if (isHigh) valueColor = Colors.red;
-    if (isLow) valueColor = Colors.red;
+    if (isHigh) valueColor = Colors.red.darker;
+    if (isLow) valueColor = Colors.red.darker;
 
     // Combine graph data with current measurement
     List<dynamic> combinedData = [];
@@ -841,9 +841,17 @@ class _MyHomePageState extends State<MyHomePage>
                         color: valueColor,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Column(
                       children: [
+                        const SizedBox(height: 8),
+                        if (trendDisplayArrow != null) 
+                        Icon(
+                          trendDisplayArrow,
+                          color: trendColor,
+                          size: 24,
+                        ),
+                        const SizedBox(height: 8),
                         const Text(
                           'mg/dL',
                           style: TextStyle(
@@ -851,13 +859,6 @@ class _MyHomePageState extends State<MyHomePage>
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        if (trendDisplayArrow != null) 
-                          Icon(
-                            trendDisplayArrow,
-                            color: trendColor,
-                            size: 24,
-                          ),
                       ],
                     )
                   ],
@@ -999,9 +1000,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                         : Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: FluentTheme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[120]
-                          : Colors.grey[80],
+                      color: SystemTheme.accentColor.accent,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -1231,9 +1230,9 @@ class GlucoseChartPainter extends CustomPainter {
       Color pointColor;
       
       if (value < targetLow) {
-        pointColor = Colors.red;
+        pointColor = Colors.red.darker;
       } else if (value > targetHigh) {
-        pointColor = Colors.red;
+        pointColor = Colors.red.darker;
       } else {
         pointColor = SystemTheme.accentColor.accent;
       }
