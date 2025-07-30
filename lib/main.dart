@@ -335,14 +335,14 @@ class _MyHomePageState extends State<MyHomePage>
     
     if (isOutOfRange) {
       if (value < targetLow) {
-        title = '⚠️ Низький рівень глюкози';
+        title = 'Низький рівень глюкози!';
         body = '$firstName: $value mg/dL (норма: ${targetLow.toInt()}-${targetHigh.toInt()})';
       } else {
-        title = '⚠️ Високий рівень глюкози';
+        title = 'Високий рівень глюкози!';
         body = '$firstName: $value mg/dL (норма: ${targetLow.toInt()}-${targetHigh.toInt()})';
       }
     } else {
-      title = '✅ Глюкоза в нормі';
+      title = 'Глюкоза в нормі';
       body = '$firstName: $value mg/dL';
     }
 
