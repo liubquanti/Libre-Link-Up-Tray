@@ -747,6 +747,8 @@ class _MyHomePageState extends State<MyHomePage>
     final trendArrow = glucoseMeasurement['TrendArrow'];
     final isHigh = glucoseMeasurement['isHigh'];
     final isLow = glucoseMeasurement['isLow'];
+    final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
+    final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
 
     Color trendColor = Colors.grey;
     IconData? trendDisplayArrow;
@@ -772,6 +774,9 @@ class _MyHomePageState extends State<MyHomePage>
         trendColor = Colors.red.darker;
         break;
     }
+
+    // Glucose background color logic
+    Color glucoseColor = _getGlucoseColor(value, targetLow, targetHigh);
 
     Color valueColor = FluentTheme.of(context).brightness == Brightness.dark 
         ? Colors.white 
@@ -815,11 +820,9 @@ class _MyHomePageState extends State<MyHomePage>
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.only(top: 20),
             decoration: BoxDecoration(
-              color: FluentTheme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF2B2B2B)
-                : Colors.grey[20],
+              color: glucoseColor.withOpacity(0.2),
               border: Border.all(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF1d1d1d)
@@ -857,6 +860,7 @@ class _MyHomePageState extends State<MyHomePage>
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
+                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -866,8 +870,19 @@ class _MyHomePageState extends State<MyHomePage>
                 const SizedBox(height: 12),
                 Text(
                   'Останнє оновлення: $timestamp',
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  height: 15, 
+                  decoration: BoxDecoration(
+                    color: glucoseColor,
+                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
+                  ),
                 ),
               ],
             ),
@@ -909,6 +924,25 @@ class _MyHomePageState extends State<MyHomePage>
         ],
       ),
     );
+  }
+
+  Color _getGlucoseColor(int value, double targetLow, double targetHigh) {
+    const int LOW = 70;
+    const int HIGH = 240;
+    
+    if (value < LOW) {
+      return Colors.red;
+    }
+    
+    if (value > HIGH) {
+      return Colors.orange;
+    }
+    
+    if ((value < targetLow && value >= LOW) || (value > targetHigh && value <= HIGH)) {
+      return Colors.yellow;
+    }
+    
+    return Colors.green;
   }
 
   @override
