@@ -1,6 +1,13 @@
-# Libre-Link-Up-Tray
+# 🩸 • Libre-Link-Up-Tray
 
-🩸 • Windows system tray app to check glucose with Libre Link Up API.
+Windows system tray app to check glucose with Libre Link Up API.
+
+![1754073191154](image/README/Microsoft-Store.svg)
+
+```
+> [!WARNING]  
+> The program has not yet been published.
+```
 
 ## ⭐ • Sources
 
