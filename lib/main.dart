@@ -387,7 +387,7 @@ class _MyHomePageState extends State<MyHomePage>
     _isBlinking = true;
     _showAlert = true;
     
-    _alertTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) async {
+    _alertTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) async {
       if (!_isGlucoseOutOfRange()) {
         _stopBlinking();
         return;

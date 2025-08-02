@@ -13,7 +13,11 @@ dependencies:
   flutter:
     sdk: flutter
   window_manager: ^0.3.7
-  tray_manager: ^0.2.0
+  tray_manager:
+    git:
+      url: https://github.com/liubquanti-frk/tray_manager.git
+      ref: main
+      path: packages/tray_manager
   http: ^1.1.0
   shared_preferences: ^2.2.2
   crypto: ^3.0.3
