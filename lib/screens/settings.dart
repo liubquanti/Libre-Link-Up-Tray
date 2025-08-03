@@ -47,11 +47,11 @@ class SettingsScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF2B2B2B)
-                : Colors.grey[20],
+                : const Color(0xFFFBFBFB),
               border: Border.all(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF1d1d1d)
-                : Colors.grey[40],
+                : const Color(0xFFe5e5e5),
               width: 1,
               ),
               borderRadius: BorderRadius.circular(8),
@@ -60,7 +60,9 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 Icon(
                   autoStartEnabled ? FluentIcons.play : FluentIcons.play,
-                  color: Colors.white,
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFffffff)
+                    : const Color(0xFF1b1b1b),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -97,11 +99,11 @@ class SettingsScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF2B2B2B)
-                : Colors.grey[20],
+                : const Color(0xFFFBFBFB),
               border: Border.all(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF1d1d1d)
-                : Colors.grey[40],
+                : const Color(0xFFe5e5e5),
               width: 1,
               ),
               borderRadius: BorderRadius.circular(8),
@@ -110,7 +112,9 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 Icon(
                   notificationsEnabled ? FluentIcons.ringer : FluentIcons.ringer_off,
-                  color: Colors.white,
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFffffff)
+                    : const Color(0xFF1b1b1b),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -147,11 +151,11 @@ class SettingsScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF2B2B2B)
-                : Colors.grey[20],
+                : const Color(0xFFFBFBFB),
               border: Border.all(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF1d1d1d)
-                : Colors.grey[40],
+                : const Color(0xFFe5e5e5),
               width: 1,
               ),
               borderRadius: BorderRadius.circular(8),
@@ -160,7 +164,9 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 Icon(
                   isDarkTheme ? FluentIcons.color : FluentIcons.brightness,
-                  color: Colors.white,
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFffffff)
+                    : const Color(0xFF1b1b1b),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -197,11 +203,11 @@ class SettingsScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF2B2B2B)
-                : Colors.grey[20],
+                : const Color(0xFFFBFBFB),
               border: Border.all(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF1d1d1d)
-                : Colors.grey[40],
+                : const Color(0xFFe5e5e5),
               width: 1,
               ),
               borderRadius: BorderRadius.circular(8),

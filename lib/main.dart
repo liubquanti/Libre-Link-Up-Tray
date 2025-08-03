@@ -638,7 +638,9 @@ class _MyHomePageState extends State<MyHomePage>
                     icon: Icon(
                       _showSettings ? FluentIcons.home : FluentIcons.settings,
                       size: 13,
-                      color: const Color(0xFFe9d9d8),
+                      color: FluentTheme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFffffff)
+                        : const Color(0xFF1b1b1b),
                     ),
                     onPressed: () {
                       setState(() {
@@ -833,7 +835,7 @@ class _MyHomePageState extends State<MyHomePage>
               border: Border.all(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF1d1d1d)
-                : Colors.grey[40],
+                : const Color(0xFFe5e5e5),
               width: 1,
               ),
               borderRadius: BorderRadius.circular(8),
@@ -867,7 +869,6 @@ class _MyHomePageState extends State<MyHomePage>
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -879,7 +880,6 @@ class _MyHomePageState extends State<MyHomePage>
                   'Last update: ${formatApiDate(timestamp)}',
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.white,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -904,11 +904,11 @@ class _MyHomePageState extends State<MyHomePage>
               decoration: BoxDecoration(
                 color: FluentTheme.of(context).brightness == Brightness.dark
                   ? const Color(0xFF2B2B2B)
-                  : Colors.grey[20],
+                  : const Color(0xFFFBFBFB),
                 border: Border.all(
                 color: FluentTheme.of(context).brightness == Brightness.dark
                   ? const Color(0xFF1d1d1d)
-                  : Colors.grey[40],
+                  : const Color(0xFFe5e5e5),
                 width: 1,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -981,11 +981,11 @@ class _MyHomePageState extends State<MyHomePage>
       decoration: BoxDecoration(
         color: FluentTheme.of(context).brightness == Brightness.dark
           ? const Color(0xFF2B2B2B)
-          : Colors.grey[20],
+          : const Color(0xFFFBFBFB),
         border: Border.all(
         color: FluentTheme.of(context).brightness == Brightness.dark
           ? const Color(0xFF1d1d1d)
-          : Colors.grey[40],
+          : const Color(0xFFe5e5e5),
         width: 1,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -1056,7 +1056,9 @@ class _MyHomePageState extends State<MyHomePage>
                 decoration: BoxDecoration(
                   color: isActive 
                   ? SystemTheme.accentColor.accent
-                  : Colors.grey[140],
+                  : FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1d1d1d)
+                    : const Color(0xFFe5e5e5),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 height: 10,
@@ -1398,7 +1400,7 @@ class GlucoseChartPainter extends CustomPainter {
       }
     }
 
-    paint.color = isDark ? Colors.white : Colors.blue;
+    paint.color = isDark ? const Color(0xFFFBFBFB) : const Color(0xFF2B2B2B);
     canvas.drawPath(path, paint);
 
     for (int i = 0; i < positions.length; i++) {
@@ -1433,13 +1435,13 @@ class GlucoseChartPainter extends CustomPainter {
 
     if (hoveredPoint != null) {
       final hoverPaint = Paint()
-        ..color = (isDark ? Colors.white : Colors.blue).withOpacity(0.3)
+        ..color = (isDark ? const Color(0xFFFBFBFB) : const Color(0xFF2B2B2B)).withOpacity(0.3)
         ..style = PaintingStyle.fill;
       
       canvas.drawCircle(hoveredPoint!, 6, hoverPaint);
       
       final hoverLinePaint = Paint()
-        ..color = (isDark ? Colors.white : Colors.blue).withOpacity(0.5)
+        ..color = (isDark ? const Color(0xFFFBFBFB) : const Color(0xFF2B2B2B)).withOpacity(0.5)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1;
       
