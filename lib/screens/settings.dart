@@ -34,14 +34,13 @@ class SettingsScreen extends StatelessWidget {
           
           const SizedBox(height: 10),
           const Text(
-            'Налаштування',
+            'Settings',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
-          // Автозапуск
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -69,14 +68,14 @@ class SettingsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Автозапуск',
+                        'Auto-start',
                         style: theme.typography.body?.copyWith(
                           fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Запускати додаток разом із системою',
+                        'Start the app with the system',
                         style: theme.typography.caption,
                       ),
                     ],
@@ -92,7 +91,6 @@ class SettingsScreen extends StatelessWidget {
           
           const SizedBox(height: 8),
           
-          // Сповіщення
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -120,14 +118,14 @@ class SettingsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Push-сповіщення',
+                        'Push notifications',
                         style: theme.typography.body?.copyWith(
                           fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Сповіщення при зміні рівня глюкози',
+                        'Notifications for glucose changes',
                         style: theme.typography.caption,
                       ),
                     ],
@@ -143,7 +141,6 @@ class SettingsScreen extends StatelessWidget {
           
           const SizedBox(height: 8),
           
-          // Тема
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -171,14 +168,14 @@ class SettingsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Темна тема іконок',
+                        'Dark icon theme',
                         style: theme.typography.body?.copyWith(
                           fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Використовувати темні іконки в треї',
+                        'Use dark tray icons',
                         style: theme.typography.caption,
                       ),
                     ],
@@ -211,19 +208,17 @@ class SettingsScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // Оновити дані
                 Container(
                   width: double.infinity,
                   height: 35,
                   child: Button(
                     onPressed: onRefresh,
-                    child: Text('Оновити дані'),
+                    child: Text('Refresh data'),
                   ),
                 ),
                 
                 const SizedBox(height: 10),
 
-                // Вийти з акаунта
                 Container(
                   width: double.infinity,
                   height: 35,
@@ -232,7 +227,7 @@ class SettingsScreen extends StatelessWidget {
                       backgroundColor: WidgetStatePropertyAll(Colors.red.darker),
                     ),
                     onPressed: onLogout,
-                    child: Text('Вийти з акаунта', style: TextStyle(color: Colors.white)),
+                    child: Text('Logout', style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],

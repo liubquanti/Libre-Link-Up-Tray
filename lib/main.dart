@@ -47,12 +47,12 @@ void main() async {
   await windowManager.ensureInitialized();
   
   WindowOptions windowOptions = const WindowOptions(
-    size: Size(450, 545),
+    size: Size(950, 665),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
-    minimumSize: Size(450, 545),
+    minimumSize: Size(450, 665),
   );
   
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -212,8 +212,8 @@ class _MyHomePageState extends State<MyHomePage>
       print('Error toggling auto-start: $e');
       await displayInfoBar(context, builder: (context, close) {
         return InfoBar(
-          title: const Text('Помилка'),
-          content: const Text('Не вдалося змінити налаштування автозапуску'),
+          title: const Text('Error'),
+          content: const Text('Failed to change auto-start settings'),
           action: IconButton(
             icon: const Icon(FluentIcons.clear),
             onPressed: close,
@@ -297,7 +297,7 @@ class _MyHomePageState extends State<MyHomePage>
     final value = glucoseMeasurement['Value'] as int;
     final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
     final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
-    final firstName = connection['firstName'] ?? 'Користувач';
+    final firstName = connection['firstName'] ?? 'User';
 
     final isCurrentlyOutOfRange = value < targetLow || value > targetHigh;
 
@@ -335,14 +335,14 @@ class _MyHomePageState extends State<MyHomePage>
     
     if (isOutOfRange) {
       if (value < targetLow) {
-        title = 'Низький рівень глюкози!';
-        body = '$firstName: $value mg/dL (норма: ${targetLow.toInt()}-${targetHigh.toInt()})';
+        title = 'Low glucose!';
+        body = '$firstName: $value mg/dL (target: ${targetLow.toInt()}-${targetHigh.toInt()})';
       } else {
-        title = 'Високий рівень глюкози!';
-        body = '$firstName: $value mg/dL (норма: ${targetLow.toInt()}-${targetHigh.toInt()})';
+        title = 'High glucose!';
+        body = '$firstName: $value mg/dL (target: ${targetLow.toInt()}-${targetHigh.toInt()})';
       }
     } else {
-      title = 'Глюкоза в нормі';
+      title = 'Glucose normal';
       body = '$firstName: $value mg/dL';
     }
 
@@ -480,13 +480,13 @@ class _MyHomePageState extends State<MyHomePage>
     await trayManager.setContextMenu(
       Menu(
         items: [
-          MenuItem(label: "Показати додаток", onClick: (menuItem) => _showWindow()),
-          MenuItem(label: "Оновити дані", onClick: (menuItem) => _updateGlucoseData()),
-          MenuItem(label: "Перемкнути тему", onClick: (menuItem) => _toggleTheme()),
-          MenuItem(label: _notificationsEnabled ? "Вимкнути сповіщення" : "Увімкнути сповіщення", onClick: (menuItem) => _toggleNotifications()),
-          MenuItem(label: _autoStartEnabled ? "Вимкнути автозапуск" : "Увімкнути автозапуск", onClick: (menuItem) => _toggleAutoStart()),
-          MenuItem(label: "Вийти з акаунта", onClick: (menuItem) => _logout()),
-          MenuItem(label: "Закрити", onClick: (menuItem) => _exitApp()),
+          MenuItem(label: "Show app", onClick: (menuItem) => _showWindow()),
+          MenuItem(label: "Refresh data", onClick: (menuItem) => _updateGlucoseData()),
+          MenuItem(label: "Toggle theme", onClick: (menuItem) => _toggleTheme()),
+          MenuItem(label: _notificationsEnabled ? "Disable notifications" : "Enable notifications", onClick: (menuItem) => _toggleNotifications()),
+          MenuItem(label: _autoStartEnabled ? "Disable auto-start" : "Enable auto-start", onClick: (menuItem) => _toggleAutoStart()),
+          MenuItem(label: "Logout", onClick: (menuItem) => _logout()),
+          MenuItem(label: "Exit", onClick: (menuItem) => _exitApp()),
         ],
       ),
     );
@@ -678,7 +678,7 @@ class _MyHomePageState extends State<MyHomePage>
                     children: [
                       ProgressRing(),
                       SizedBox(height: 16),
-                      Text('Ініціалізація...'),
+                      Text('Initializing...'),
                     ],
                   ),
                 ),
@@ -737,7 +737,7 @@ class _MyHomePageState extends State<MyHomePage>
     if (glucoseMeasurement == null) {
       return const Center(
         child: Text(
-          'Немає даних про глюкозу',
+          'No glucose data',
           style: TextStyle(fontSize: 18),
         ),
       );
@@ -876,7 +876,7 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Останнє оновлення: $timestamp',
+                  'Last update: ${formatApiDate(timestamp)}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: Colors.white,
@@ -966,7 +966,7 @@ class _MyHomePageState extends State<MyHomePage>
     }
     
     // Calculate activation date
-    String activationDate = 'Невідомо';
+    String activationDate = 'Unknown';
     int daysSinceActivation = 0;
     if (activationTimestamp != null) {
       final activationDateTime = DateTime.fromMillisecondsSinceEpoch(activationTimestamp * 1000);
@@ -1260,7 +1260,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
     final value = points[pointIndex].toInt();
     final timestamp = dataItem['Timestamp'] as String? ?? 
                      dataItem['FactoryTimestamp'] as String? ?? 
-                     'Невідомо';
+                     'Unknown';
     
     setState(() {
       _hoveredPoint = Offset(x, y);
@@ -1468,4 +1468,29 @@ class GlucoseChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
+String formatApiDate(String apiDate) {
+  try {
+    final regex = RegExp(r'(\d{1,2})/(\d{1,2})/(\d{4}) (\d{1,2}):(\d{2}):(\d{2}) ([AP]M)');
+    final match = regex.firstMatch(apiDate);
+    if (match != null) {
+      final month = int.parse(match.group(1)!);
+      final day = int.parse(match.group(2)!);
+      final year = int.parse(match.group(3)!);
+      var hour = int.parse(match.group(4)!);
+      final minute = int.parse(match.group(5)!);
+      final second = int.parse(match.group(6)!);
+      final ampm = match.group(7)!;
+
+      if (ampm == 'PM' && hour != 12) hour += 12;
+      if (ampm == 'AM' && hour == 12) hour = 0;
+
+      final dt = DateTime(year, month, day, hour, minute, second);
+      return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    }
+  } catch (e) {
+    print('Date parse error: $e');
+  }
+  return apiDate;
 }

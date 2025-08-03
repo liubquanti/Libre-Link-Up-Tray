@@ -70,8 +70,8 @@ class _LoginScreenState extends State<LoginScreen> {
         print('LoginScreen: Login successful but failed to get connections');
         await displayInfoBar(context, builder: (context, close) {
           return InfoBar(
-            title: const Text('Помилка з\'єднання'),
-            content: const Text('Успішний вхід, але не вдалося отримати з\'єднання. Перевірте налаштування акаунта.'),
+            title: const Text('Connection error'),
+            content: const Text('Login successful, but failed to get connections. Check your account settings.'),
             action: IconButton(
               icon: const Icon(FluentIcons.clear),
               onPressed: close,
@@ -84,8 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
       print('LoginScreen: Login failed');
       await displayInfoBar(context, builder: (context, close) {
         return InfoBar(
-          title: const Text('Помилка входу'),
-          content: const Text('Невірний email або пароль'),
+          title: const Text('Login error'),
+          content: const Text('Invalid email or password'),
           action: IconButton(
             icon: const Icon(FluentIcons.clear),
             onPressed: close,
@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 5),
                 
                 Text(
-                  'Увійдіть до свого облікового запису',
+                  'Log in to your account',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[100],
@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         label: 'Email',
                         child: TextBox(
                           controller: _emailController,
-                          placeholder: 'Введіть ваш email',
+                          placeholder: 'Enter your email',
                           keyboardType: TextInputType.emailAddress,
                         ),
                       ),
@@ -149,10 +149,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 10),
                       
                       InfoLabel(
-                        label: 'Пароль',
+                        label: 'Password',
                         child: PasswordBox(
                           controller: _passwordController,
-                          placeholder: 'Введіть ваш пароль',
+                          placeholder: 'Enter your password',
 
                         ),
                       ),
@@ -173,10 +173,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                       child: ProgressRing(strokeWidth: 2),
                                     ),
                                     SizedBox(width: 8),
-                                    Text('Увійти...'),
+                                    Text('Logging in...'),
                                   ],
                                 )
-                              : const Text('Увійти'),
+                              : const Text('Log in'),
                         ),
                       ),
                     ]
