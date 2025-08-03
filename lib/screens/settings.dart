@@ -208,26 +208,26 @@ class SettingsScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Container(
+                SizedBox(
                   width: double.infinity,
-                  height: 35,
+                  height: 31,
                   child: Button(
                     onPressed: onRefresh,
-                    child: Text('Refresh data'),
+                    child: const Text('Refresh data'),
                   ),
                 ),
                 
                 const SizedBox(height: 10),
 
-                Container(
+                SizedBox(
                   width: double.infinity,
-                  height: 35,
+                  height: 31,
                   child: FilledButton(
                     style: ButtonStyle(
                       backgroundColor: WidgetStatePropertyAll(Colors.red.darker),
                     ),
                     onPressed: onLogout,
-                    child: Text('Logout', style: TextStyle(color: Colors.white)),
+                    child: const Text('Logout', style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],
