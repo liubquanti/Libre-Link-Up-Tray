@@ -90,11 +90,11 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "liubquanti" "\0"
-            VALUE "FileDescription", "libre_link_up_tray" "\0"
+            VALUE "FileDescription", "LibreLinkUpTray" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "libre_link_up_tray" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 liubquanti. All rights reserved." "\0"
-            VALUE "OriginalFilename", "libre_link_up_tray.exe" "\0"
+            VALUE "OriginalFilename", "LibreLinkUpTray.exe" "\0"
             VALUE "ProductName", "libre_link_up_tray" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
