@@ -4,7 +4,7 @@ Windows system tray app to check glucose with Libre Link Up API.
 
 ![1754302942595](image/README/1754302942595.png)
 
-![1754302488158](image/README/1754302488158.png)
+![1754304059074](image/README/1754304059074.png)
 
 > [!WARNING]
 > The program has not yet been published.
