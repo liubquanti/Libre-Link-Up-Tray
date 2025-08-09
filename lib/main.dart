@@ -17,19 +17,16 @@ import 'screens/settings.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Configure system theme
   if (defaultTargetPlatform.supportsAccentColor) {
     SystemTheme.fallbackColor = Colors.blue;
     await SystemTheme.accentColor.load();
   }
   
-  // Setup notifications
   await localNotifier.setup(
     appName: 'LibreLinkUpTray',
     shortcutPolicy: ShortcutPolicy.requireCreate,
   );
   
-  // Setup launch at startup
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
   
   launchAtStartup.setup(
@@ -38,7 +35,6 @@ void main() async {
     packageName: 'liubquanti.librelinkup.tray',
   );
   
-  // Enable auto-start by default
   bool isEnabled = await launchAtStartup.isEnabled();
   if (!isEnabled) {
     await launchAtStartup.enable();
@@ -56,7 +52,6 @@ void main() async {
   );
   
   windowManager.waitUntilReadyToShow(windowOptions, () async {
-    // Don't show window on startup - will be controlled by app logic
   });
   
   windowManager.setPreventClose(true);
@@ -74,7 +69,6 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
-    // Listen for system theme changes
     SystemTheme.onChange.listen((event) {
       if (mounted) setState(() {});
     });
@@ -82,7 +76,6 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Convert system accent color to FluentUI AccentColor
     final systemAccent = AccentColor.swatch({
       'darkest': SystemTheme.accentColor.darkest,
       'darker': SystemTheme.accentColor.darker,
@@ -140,7 +133,6 @@ class _MyHomePageState extends State<MyHomePage>
   bool _hasShownWindowOnStartup = false;
   bool _showSettings = false;
   
-  // Notification tracking
   bool _wasOutOfRange = false;
   int? _lastGlucoseValue;
   bool _notificationsEnabled = true;
@@ -162,13 +154,11 @@ class _MyHomePageState extends State<MyHomePage>
         _isInitialized = true;
       });
       
-      // Show window only if not logged in
       if (!_isLoggedIn && !_hasShownWindowOnStartup) {
         _hasShownWindowOnStartup = true;
         await windowManager.show();
         await windowManager.focus();
       } else if (_isLoggedIn) {
-        // Hide window if already logged in
         print('Already logged in - keeping window hidden');
         await windowManager.hide();
       }
@@ -177,7 +167,6 @@ class _MyHomePageState extends State<MyHomePage>
       setState(() {
         _isInitialized = true;
       });
-      // Show window on error
       if (!_hasShownWindowOnStartup) {
         _hasShownWindowOnStartup = true;
         await windowManager.show();
@@ -206,7 +195,6 @@ class _MyHomePageState extends State<MyHomePage>
       }
       await _checkAutoStartStatus();
       
-      // Update tray context menu
       await _updateTrayContextMenu();
     } catch (e) {
       print('Error toggling auto-start: $e');
@@ -301,26 +289,21 @@ class _MyHomePageState extends State<MyHomePage>
 
     final isCurrentlyOutOfRange = value < targetLow || value > targetHigh;
 
-    // Check if this is the first measurement
     if (_lastGlucoseValue == null) {
       _lastGlucoseValue = value;
       _wasOutOfRange = isCurrentlyOutOfRange;
       return;
     }
 
-    // Check if status changed
     if (_wasOutOfRange != isCurrentlyOutOfRange) {
       if (isCurrentlyOutOfRange) {
-        // Glucose went out of range
         await _showGlucoseAlert(value, targetLow, targetHigh, firstName, true);
       } else {
-        // Glucose returned to normal range
         await _showGlucoseAlert(value, targetLow, targetHigh, firstName, false);
       }
     } else if (isCurrentlyOutOfRange && _lastGlucoseValue != value) {
-      // Still out of range but value changed significantly
       final difference = (value - _lastGlucoseValue!).abs();
-      if (difference >= 20) { // Alert if change is 20 mg/dL or more
+      if (difference >= 20) {
         await _showGlucoseAlert(value, targetLow, targetHigh, firstName, true);
       }
     }
@@ -444,7 +427,6 @@ class _MyHomePageState extends State<MyHomePage>
           
           await trayManager.setToolTip("$value mg/dL $trendText");
           
-          // Check if glucose is out of range
           if (_isGlucoseOutOfRange()) {
             if (!_isBlinking) {
               _startBlinking();
@@ -497,7 +479,6 @@ class _MyHomePageState extends State<MyHomePage>
       await trayManager.setToolTip("LibreLinkUpTray");
       
       try {
-        // Use loading icon instead of glucose icon when no data
         await trayManager.setIcon('assets/tray/load.ico');
       } catch (iconError) {
         print('Warning: Could not set initial tray icon: $iconError');
@@ -543,11 +524,9 @@ class _MyHomePageState extends State<MyHomePage>
         _wasOutOfRange = false;
         _lastGlucoseValue = null;
       });
-      // Set loading icon when logged out
       await trayManager.setIcon('assets/tray/load.ico');
       await trayManager.setToolTip("LibreLinkUpTray");
       
-      // Show login screen when logging out
       _showWindow();
     } catch (e) {
       print('Logout error: $e');
@@ -559,7 +538,6 @@ class _MyHomePageState extends State<MyHomePage>
       _isLoggedIn = true;
     });
     _startPeriodicUpdate();
-    // Hide window after successful login
     windowManager.hide();
   }
 
@@ -586,20 +564,18 @@ class _MyHomePageState extends State<MyHomePage>
       ),
       child: Row(
         children: [
-          // Draggable area - expanded to fill all available space
           Expanded(
             child: GestureDetector(
               onPanStart: (details) {
                 windowManager.startDragging();
               },
               onTapDown: (details) {
-                // Handle double tap to maximize/restore
               },
               child: Container(
                 height: 32,
-                width: double.infinity, // Take full width
+                width: double.infinity,
                 padding: const EdgeInsets.only(left: 10),
-                color: Colors.transparent, // Make sure it captures gestures
+                color: Colors.transparent,
                 child: Align(
                   alignment: Alignment.centerLeft,
                     child: Row(
@@ -626,7 +602,6 @@ class _MyHomePageState extends State<MyHomePage>
               ),
             ),
           ),
-          // Controls area (non-draggable)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -778,7 +753,6 @@ class _MyHomePageState extends State<MyHomePage>
         break;
     }
 
-    // Glucose background color logic
     Color glucoseColor = _getGlucoseColor(value, targetLow, targetHigh);
 
     Color valueColor = FluentTheme.of(context).brightness == Brightness.dark 
@@ -787,13 +761,11 @@ class _MyHomePageState extends State<MyHomePage>
     if (isHigh) valueColor = Colors.red.darker;
     if (isLow) valueColor = Colors.red.darker;
 
-    // Combine graph data with current measurement
     List<dynamic> combinedData = [];
     if (graphData != null) {
       combinedData.addAll(graphData);
     }
     
-    // Add current measurement as the last point if it's not already there
     if (combinedData.isEmpty || 
         combinedData.last['Value'] != value || 
         combinedData.last['Timestamp'] != timestamp) {
@@ -801,11 +773,10 @@ class _MyHomePageState extends State<MyHomePage>
         'Value': value,
         'Timestamp': timestamp,
         'FactoryTimestamp': timestamp,
-        'isCurrent': true, // Mark as current measurement
+        'isCurrent': true,
       });
     }
 
-    // Get the first active sensor for display
     Map<String, dynamic>? currentSensor;
     if (activeSensors != null && activeSensors.isNotEmpty) {
       currentSensor = activeSensors.first;
@@ -946,9 +917,8 @@ class _MyHomePageState extends State<MyHomePage>
     final pt = sensor['pt'] as int? ?? 4;
     final sn = sensor['sn'] as String? ?? 'Unknown';
     final activationTimestamp = sensor['a'] as int?;
-    final isActive = device?['s'] as bool? ?? true; // Default to true if not specified
+    final isActive = device?['s'] as bool? ?? true;
     
-    // Determine sensor image and name based on pt value
     String sensorImage;
     String sensorName;
     switch (pt) {
@@ -965,7 +935,6 @@ class _MyHomePageState extends State<MyHomePage>
         sensorName = 'Libre Sensor';
     }
     
-    // Calculate activation date
     String activationDate = 'Unknown';
     int daysSinceActivation = 0;
     if (activationTimestamp != null) {
@@ -1044,7 +1013,6 @@ class _MyHomePageState extends State<MyHomePage>
             ],
           ),
           const SizedBox(height: 16),
-            // Sensor duration indicators (14 days total lifespan)
             LayoutBuilder(
             builder: (context, constraints) {
               return Row(
@@ -1157,7 +1125,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                 size: Size.infinite,
                 painter: GlucoseChartPainter(
                   points: points,
-                  data: widget.data, // Pass the full data
+                  data: widget.data,
                   minValue: minValue,
                   maxValue: maxValue,
                   targetLow: widget.targetLow,
@@ -1333,7 +1301,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
 
 class GlucoseChartPainter extends CustomPainter {
   final List<double> points;
-  final List<dynamic> data; // Add data to access isCurrent flag
+  final List<dynamic> data;
   final double minValue;
   final double maxValue;
   final double targetLow;
@@ -1419,11 +1387,9 @@ class GlucoseChartPainter extends CustomPainter {
 
       pointPaint.color = pointColor;
       
-      // Draw larger point for current measurement
       final pointRadius = isCurrent ? 5.0 : 3.0;
       canvas.drawCircle(positions[i], pointRadius, pointPaint);
       
-      // Add ring around current measurement
       if (isCurrent) {
         final ringPaint = Paint()
           ..color = pointColor.withOpacity(0.3)
