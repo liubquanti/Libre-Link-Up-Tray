@@ -1,10 +1,6 @@
 name: libre_link_up_tray
 description: LibreLinkUpTray application for monitoring glucose levels
 
-publish_to: 'none'
-
-version: 1.0.0+1
-
 environment:
   sdk: '>=3.0.0 <4.0.0'
   flutter: ">=3.10.0"

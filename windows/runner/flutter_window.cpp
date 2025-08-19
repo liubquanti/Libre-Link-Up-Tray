@@ -1,6 +1,7 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <windows.h>
 
 #include "flutter/generated_plugin_registrant.h"
 
@@ -47,10 +48,27 @@ void FlutterWindow::OnDestroy() {
   Win32Window::OnDestroy();
 }
 
-LRESULT
-FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
-                              WPARAM const wparam,
-                              LPARAM const lparam) noexcept {
+// Глобальне повідомлення для показу вікна з іншого процесу
+static const wchar_t kShowMessageName[] = L"LibreLinkUpTray_Show";
+static UINT g_show_app_msg = RegisterWindowMessageW(kShowMessageName);
+
+LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
+                                      WPARAM const wparam,
+                                      LPARAM const lparam) noexcept {
+  // Показ існуючого вікна за запитом другої копії
+  if (message == g_show_app_msg) {
+    ShowWindow(hwnd, SW_RESTORE);
+    ShowWindow(hwnd, SW_SHOW);
+    SetForegroundWindow(hwnd);
+    SetActiveWindow(hwnd);
+    // "підняти" поверх інших тимчасово
+    SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE);
+    SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE);
+    return 0;
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
