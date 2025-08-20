@@ -43,7 +43,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF2B2B2B)
@@ -75,7 +75,6 @@ class SettingsScreen extends StatelessWidget {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Text(
                         'Start the app with the system',
                         style: theme.typography.caption,
@@ -91,11 +90,11 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF2B2B2B)
@@ -127,7 +126,6 @@ class SettingsScreen extends StatelessWidget {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Text(
                         'Notifications for glucose changes',
                         style: theme.typography.caption,
@@ -143,11 +141,11 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
               color: FluentTheme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF2B2B2B)
@@ -179,7 +177,6 @@ class SettingsScreen extends StatelessWidget {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Text(
                         'Use dark tray icons',
                         style: theme.typography.caption,
@@ -194,8 +191,62 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
+
+          const SizedBox(height: 5),
           
-          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2B2B2B)
+                : const Color(0xFFFBFBFB),
+              border: Border.all(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1d1d1d)
+                : const Color(0xFFe5e5e5),
+              width: 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  FluentIcons.info,
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFffffff)
+                    : const Color(0xFF1b1b1b),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'App information',
+                        style: theme.typography.body?.copyWith(
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      Text(
+                        'Version and developer',
+                        style: theme.typography.caption,
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  FluentIcons.chevron_right_med,
+                  size: 10,
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFffffff)
+                    : const Color(0xFF1b1b1b),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 5),
           
           Container(
             width: double.infinity,
