@@ -47,7 +47,9 @@ flutter_launcher_icons:
 msix_config:
   display_name: LibreLinkUpTray
   publisher_display_name: liubquanti
-  msix_version: 0.1.0.0
+  publisher: 
+  identity_name: liubquanti.LibreLinkUpTray
+  msix_version: 0.0.1.0
   logo_path: assets/icon/icon.png
   capabilities: internetClient
   store: true
