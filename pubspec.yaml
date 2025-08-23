@@ -37,6 +37,7 @@ flutter:
     - assets/tray/alert.ico
     - assets/tray/load.ico
     - assets/icon/icon.png
+    - assets/data/testdata.json
 
 flutter_launcher_icons:
   windows:

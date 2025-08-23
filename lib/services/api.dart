@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crypto/crypto.dart';
@@ -13,6 +14,8 @@ class LibreLinkService {
   String? _authToken;
   String? _patientId;
   String? _userId;
+
+  bool testMode = false; // Додаємо прапор
 
   Map<String, String> get _baseHeaders => {
     'accept-encoding': 'gzip',
@@ -36,6 +39,15 @@ class LibreLinkService {
   }
 
   Future<bool> login(String email, String password) async {
+    // Перевірка тестових даних
+    if (email.trim().toLowerCase() == 'test@liubquanti.click' && password == '1234567890') {
+      testMode = true;
+      _authToken = 'test_token';
+      _userId = 'test_user';
+      _patientId = 'test_patient';
+      return true;
+    }
+
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/llu/auth/login'),
@@ -104,6 +116,17 @@ class LibreLinkService {
   }
 
   Future<List<dynamic>?> getConnections() async {
+    if (testMode) {
+      // Повертаємо тестові дані (можна взяти з testdata.json)
+      return [
+        {
+          'patientId': 'test_patient',
+          'firstName': 'Nikole',
+          'lastName': 'Adalwin',
+        }
+      ];
+    }
+    
     print('getConnections called');
     print('Current state - auth: $_authToken, user: $_userId');
     
@@ -142,6 +165,17 @@ class LibreLinkService {
   }
 
   Future<Map<String, dynamic>?> getGlucoseData() async {
+    if (testMode) {
+      try {
+        final jsonStr = await _loadTestData();
+        final data = jsonDecode(jsonStr);
+        return data['data'];
+      } catch (e) {
+        print('Test mode: error loading testdata.json: $e');
+        return null;
+      }
+    }
+    
     print('getGlucoseData called');
     print('Current state - auth: $_authToken, patient: $_patientId, user: $_userId');
     
@@ -208,4 +242,14 @@ class LibreLinkService {
   String? get currentAuthToken => _authToken;
   String? get currentUserId => _userId;
   String? get currentPatientId => _patientId;
+
+  Future<String> _loadTestData() async {
+    // Читання локального файлу
+    return await Future.delayed(const Duration(milliseconds: 100), () async {
+      return await DefaultAssetBundle.of(globalContext!).loadString('assets/data/testdata.json');
+    });
+  }
+
+  // Додаємо глобальний контекст для AssetBundle
+  static BuildContext? globalContext;
 }
