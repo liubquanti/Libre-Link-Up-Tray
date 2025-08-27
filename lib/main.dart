@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:local_notifier/local_notifier.dart';
+import 'package:fluentui_icons/fluentui_icons.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -68,7 +69,7 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
-    LibreLinkService.globalContext = context; // <-- додати
+    LibreLinkService.globalContext = context;
 
     final systemAccent = AccentColor.swatch({
       'darkest': SystemTheme.accentColor.darkest,
@@ -722,38 +723,33 @@ class _MyHomePageState extends State<MyHomePage>
     final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
     final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
 
-    Color trendColor = Colors.grey;
-    IconData? trendDisplayArrow;
-    switch (trendArrow) {
-      case 1: 
-        trendDisplayArrow = FluentIcons.down;
-        trendColor = Colors.red.darker;
-        break;
-      case 2: 
-        trendDisplayArrow = FluentIcons.arrow_down_right8;
-        trendColor = Colors.red.darker;
-        break;
-      case 3: 
-        trendDisplayArrow = FluentIcons.forward;
-        trendColor = SystemTheme.accentColor.accent;
-        break;
-      case 4: 
-        trendDisplayArrow = FluentIcons.arrow_up_right;
-        trendColor = Colors.red.darker;
-        break;
-      case 5: 
-        trendDisplayArrow = FluentIcons.up;
-        trendColor = Colors.red.darker;
-        break;
-    }
-
     Color glucoseColor = _getGlucoseColor(value, targetLow, targetHigh);
 
     Color valueColor = FluentTheme.of(context).brightness == Brightness.dark 
-        ? Colors.white 
-        : Colors.black;
+      ? Colors.white 
+      : Colors.black;
     if (isHigh) valueColor = Colors.red.darker;
     if (isLow) valueColor = Colors.red.darker;
+
+    Color trendColor = valueColor;
+    IconData? trendDisplayArrow;
+    switch (trendArrow) {
+      case 1: 
+        trendDisplayArrow = FluentSystemIcons.ic_fluent_arrow_down_filled;
+        break;
+      case 2: 
+        trendDisplayArrow = FluentSystemIcons.ic_fluent_arrow_down_left_filled;
+        break;
+      case 3: 
+        trendDisplayArrow = FluentSystemIcons.ic_fluent_arrow_right_filled;
+        break;
+      case 4: 
+        trendDisplayArrow = FluentSystemIcons.ic_fluent_arrow_up_right_filled;
+        break;
+      case 5: 
+        trendDisplayArrow = FluentSystemIcons.ic_fluent_arrow_up_filled;
+        break;
+    }
 
     List<dynamic> combinedData = [];
     if (graphData != null) {
@@ -781,15 +777,25 @@ class _MyHomePageState extends State<MyHomePage>
       child: Column(
         children: [
           const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              '${connection['firstName']} ${connection['lastName']}',
-              style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${connection['firstName']} ${connection['lastName']}',
+                style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
+              const Spacer(),
+              FilledButton(
+                style: ButtonStyle(
+                  backgroundColor: WidgetStatePropertyAll(SystemTheme.accentColor.accent),
+                ),
+                onPressed: null,
+                child: Text('Logbook', style: TextStyle(color: valueColor)),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Container(
@@ -821,14 +827,18 @@ class _MyHomePageState extends State<MyHomePage>
                     const SizedBox(width: 8),
                     Column(
                       children: [
-                        const SizedBox(height: 8),
                         if (trendDisplayArrow != null) 
-                        Icon(
-                          trendDisplayArrow,
-                          color: trendColor,
-                          size: 24,
+                        Transform(
+                          alignment: Alignment.center,
+                          transform: (trendDisplayArrow == FluentSystemIcons.ic_fluent_arrow_down_left_filled)
+                            ? Matrix4.rotationY(math.pi)
+                            : Matrix4.identity(),
+                          child: Icon(
+                            trendDisplayArrow,
+                            color: trendColor,
+                            size: 36,
+                          ),
                         ),
-                        const SizedBox(height: 8),
                         const Text(
                           'mg/dL',
                           style: TextStyle(
