@@ -280,11 +280,14 @@ class _MyHomePageState extends State<MyHomePage>
     if (glucoseMeasurement == null) return;
 
     final value = glucoseMeasurement['Value'] as int;
-    final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
-    final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
+    final patientDevice = connection['patientDevice'] as Map<String, dynamic>?;
+
+    // Використовуємо ll та hl з patientDevice, якщо є
+    final lowLimit = patientDevice?['ll']?.toDouble() ?? 70.0;
+    final highLimit = patientDevice?['hl']?.toDouble() ?? 180.0;
     final firstName = connection['firstName'] ?? 'User';
 
-    final isCurrentlyOutOfRange = value < targetLow || value > targetHigh;
+    final isCurrentlyOutOfRange = value < lowLimit || value > highLimit;
 
     if (_lastGlucoseValue == null) {
       _lastGlucoseValue = value;
@@ -294,14 +297,14 @@ class _MyHomePageState extends State<MyHomePage>
 
     if (_wasOutOfRange != isCurrentlyOutOfRange) {
       if (isCurrentlyOutOfRange) {
-        await _showGlucoseAlert(value, targetLow, targetHigh, firstName, true);
+        await _showGlucoseAlert(value, lowLimit, highLimit, firstName, true);
       } else {
-        await _showGlucoseAlert(value, targetLow, targetHigh, firstName, false);
+        await _showGlucoseAlert(value, lowLimit, highLimit, firstName, false);
       }
     } else if (isCurrentlyOutOfRange && _lastGlucoseValue != value) {
       final difference = (value - _lastGlucoseValue!).abs();
       if (difference >= 20) {
-        await _showGlucoseAlert(value, targetLow, targetHigh, firstName, true);
+        await _showGlucoseAlert(value, lowLimit, highLimit, firstName, true);
       }
     }
 
@@ -309,17 +312,33 @@ class _MyHomePageState extends State<MyHomePage>
     _wasOutOfRange = isCurrentlyOutOfRange;
   }
 
-  Future<void> _showGlucoseAlert(int value, double targetLow, double targetHigh, String firstName, bool isOutOfRange) async {
+  bool _isGlucoseOutOfRange() {
+    if (_glucoseData == null) return false;
+
+    final connection = _glucoseData!['connection'];
+    final glucoseMeasurement = connection['glucoseMeasurement'];
+    if (glucoseMeasurement == null) return false;
+
+    final value = glucoseMeasurement['Value'] as int;
+    final patientDevice = connection['patientDevice'] as Map<String, dynamic>?;
+
+    final lowLimit = patientDevice?['ll']?.toDouble() ?? 70.0;
+    final highLimit = patientDevice?['hl']?.toDouble() ?? 180.0;
+
+    return value < lowLimit || value > highLimit;
+  }
+
+  Future<void> _showGlucoseAlert(int value, double lowLimit, double highLimit, String firstName, bool isOutOfRange) async {
     String title;
     String body;
-    
+
     if (isOutOfRange) {
-      if (value < targetLow) {
+      if (value < lowLimit) {
         title = 'Low glucose!';
-        body = '$firstName: $value mg/dL (target: ${targetLow.toInt()}-${targetHigh.toInt()})';
+        body = '$firstName: $value mg/dL (limit: ${lowLimit.toInt()}-${highLimit.toInt()})';
       } else {
         title = 'High glucose!';
-        body = '$firstName: $value mg/dL (target: ${targetLow.toInt()}-${targetHigh.toInt()})';
+        body = '$firstName: $value mg/dL (limit: ${lowLimit.toInt()}-${highLimit.toInt()})';
       }
     } else {
       title = 'Glucose normal';
@@ -345,20 +364,6 @@ class _MyHomePageState extends State<MyHomePage>
     };
 
     await notification.show();
-  }
-
-  bool _isGlucoseOutOfRange() {
-    if (_glucoseData == null) return false;
-    
-    final connection = _glucoseData!['connection'];
-    final glucoseMeasurement = connection['glucoseMeasurement'];
-    if (glucoseMeasurement == null) return false;
-    
-    final value = glucoseMeasurement['Value'] as int;
-    final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
-    final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
-    
-    return value < targetLow || value > targetHigh;
   }
 
   void _startBlinking() {
