@@ -221,6 +221,30 @@ class LibreLinkService {
     }
   }
 
+  Future<List<dynamic>?> getLogbook() async {
+    if (testMode) {
+      // Якщо тестовий режим, можна повернути тестові записи з локального файлу або заглушку
+      return [];
+    }
+    if (_authToken == null || _patientId == null) return null;
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/llu/connections/$_patientId/logbook'),
+        headers: _authHeaders,
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 0) {
+          return data['data'] as List<dynamic>;
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Get logbook error: $e');
+      return null;
+    }
+  }
+
   Future<void> logout() async {
     print('Logging out...');
     _authToken = null;

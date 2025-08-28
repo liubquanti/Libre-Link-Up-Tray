@@ -14,6 +14,7 @@ import 'services/api.dart';
 import 'services/icons.dart';
 import 'screens/login.dart';
 import 'screens/settings.dart';
+import 'screens/logbook.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -127,6 +128,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool _autoStartEnabled = false;
   bool _hasShownWindowOnStartup = false;
   bool _showSettings = false;
+  bool _showLogbook = false;
   
   bool _wasOutOfRange = false;
   int? _lastGlucoseValue;
@@ -516,6 +518,7 @@ class _MyHomePageState extends State<MyHomePage>
         _isBlinking = false;
         _showAlert = false;
         _showSettings = false;
+        _showLogbook = false;
         _wasOutOfRange = false;
         _lastGlucoseValue = null;
       });
@@ -543,14 +546,35 @@ class _MyHomePageState extends State<MyHomePage>
 
   Widget _buildCustomTitleBar() {
     final theme = FluentTheme.of(context);
-    
+
+    IconData mainIcon;
+    VoidCallback mainAction;
+
+    if (_showLogbook) {
+      mainIcon = FluentSystemIcons.ic_fluent_arrow_left_regular;
+      mainAction = () {
+        setState(() {
+          _showLogbook = false;
+        });
+      };
+    } else {
+      mainIcon = _showSettings
+          ? FluentSystemIcons.ic_fluent_home_regular
+          : FluentSystemIcons.ic_fluent_settings_regular;
+      mainAction = () {
+        setState(() {
+          _showSettings = !_showSettings;
+        });
+      };
+    }
+
     return Container(
       height: 35,
       decoration: BoxDecoration(
         color: theme.micaBackgroundColor,
         border: Border(
           bottom: BorderSide(
-            color: theme.brightness == Brightness.dark 
+            color: theme.brightness == Brightness.dark
                 ? Colors.white.withOpacity(0.08)
                 : Colors.black.withOpacity(0.08),
             width: 1,
@@ -564,8 +588,6 @@ class _MyHomePageState extends State<MyHomePage>
               onPanStart: (details) {
                 windowManager.startDragging();
               },
-              onTapDown: (details) {
-              },
               child: Container(
                 height: 32,
                 width: double.infinity,
@@ -573,23 +595,23 @@ class _MyHomePageState extends State<MyHomePage>
                 color: Colors.transparent,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                    child: Row(
+                  child: Row(
                     children: [
                       Image.asset(
-                      'assets/icon/icon.png',
-                      width: 16,
-                      height: 16,
+                        'assets/icon/icon.png',
+                        width: 16,
+                        height: 16,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                      'LibreLinkUpTray',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: theme.brightness == Brightness.dark 
-                          ? Colors.white
-                          : Colors.black,
-                      ),
+                        'LibreLinkUpTray',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                        ),
                       ),
                     ],
                   ),
@@ -603,25 +625,21 @@ class _MyHomePageState extends State<MyHomePage>
               if (_isLoggedIn) ...[
                 SizedBox(
                   width: 45,
-                    child: IconButton(
+                  child: IconButton(
                     style: ButtonStyle(
                       shape: WidgetStateProperty.all(const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                      side: BorderSide.none,
+                        borderRadius: BorderRadius.zero,
+                        side: BorderSide.none,
                       )),
                     ),
                     icon: Icon(
-                      _showSettings ? FluentSystemIcons.ic_fluent_home_regular : FluentSystemIcons.ic_fluent_settings_regular,
+                      mainIcon,
                       size: 16,
-                      color: FluentTheme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFc5c5c5)
-                      : const Color(0xFF1b1b1b),
+                      color: theme.brightness == Brightness.dark
+                          ? const Color(0xFFc5c5c5)
+                          : const Color(0xFF1b1b1b),
                     ),
-                    onPressed: () {
-                      setState(() {
-                      _showSettings = !_showSettings;
-                      });
-                    },
+                    onPressed: mainAction,
                   ),
                 ),
               ],
@@ -684,20 +702,29 @@ class _MyHomePageState extends State<MyHomePage>
           Expanded(
             child: ScaffoldPage(
               padding: EdgeInsets.zero,
-              content: _showSettings 
-                  ? SettingsScreen(
-                      autoStartEnabled: _autoStartEnabled,
-                      isDarkTheme: _iconService.isDarkTheme,
-                      notificationsEnabled: _notificationsEnabled,
-                      onToggleAutoStart: _toggleAutoStart,
-                      onToggleTheme: _toggleTheme,
-                      onToggleNotifications: _toggleNotifications,
-                      onRefresh: _updateGlucoseData,
-                      onLogout: _logout,
+              content: _showLogbook
+                  ? LogbookScreen(
+                      onBack: () {
+                        setState(() {
+                          _showLogbook = false;
+                        });
+                      },
+                      service: _service,
                     )
-                  : _glucoseData == null
-                      ? const Center(child: ProgressRing())
-                      : _buildGlucoseDisplay(),
+                  : _showSettings
+                      ? SettingsScreen(
+                          autoStartEnabled: _autoStartEnabled,
+                          isDarkTheme: _iconService.isDarkTheme,
+                          notificationsEnabled: _notificationsEnabled,
+                          onToggleAutoStart: _toggleAutoStart,
+                          onToggleTheme: _toggleTheme,
+                          onToggleNotifications: _toggleNotifications,
+                          onRefresh: _updateGlucoseData,
+                          onLogout: _logout,
+                        )
+                      : _glucoseData == null
+                          ? const Center(child: ProgressRing())
+                          : _buildGlucoseDisplay(),
             ),
           ),
         ],
@@ -794,31 +821,35 @@ class _MyHomePageState extends State<MyHomePage>
               ),
               const Spacer(),
                 FilledButton(
-                style: ButtonStyle(
-                  backgroundColor: WidgetStatePropertyAll(SystemTheme.accentColor.accent),
-                ),
-                onPressed: null,
-                child: Row(
-                  children: [
-                  Icon(
-                    FluentSystemIcons.ic_fluent_notebook_filled,
-                    size: 16,
-                    color: FluentTheme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF000000)
-                      : const Color(0xFFFFFFFF),
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStatePropertyAll(SystemTheme.accentColor.accent),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Logbook',
-                    style: TextStyle(
-                    color: FluentTheme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF000000)
-                      : const Color(0xFFFFFFFF),
-                    ),
+                  onPressed: () {
+                    setState(() {
+                      _showLogbook = true;
+                    });
+                  },
+                  child: Row(
+                    children: [
+                      Icon(
+                        FluentSystemIcons.ic_fluent_notebook_filled,
+                        size: 16,
+                        color: FluentTheme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF000000)
+                          : const Color(0xFFFFFFFF),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Logbook',
+                        style: TextStyle(
+                          color: FluentTheme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF000000)
+                            : const Color(0xFFFFFFFF),
+                        ),
+                      ),
+                    ],
                   ),
-                  ],
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
