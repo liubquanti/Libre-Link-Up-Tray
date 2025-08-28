@@ -20,6 +20,8 @@ dependencies:
   package_info_plus: ^8.3.0
   local_notifier: ^0.1.6
   fluentui_icons: ^1.0.0
+  dashed_path: ^1.0.1
+  path_drawing: ^1.0.1
 
 dev_dependencies:
   flutter_test:

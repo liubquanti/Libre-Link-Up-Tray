@@ -7,6 +7,7 @@ import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
+import 'package:path_drawing/path_drawing.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -759,6 +760,10 @@ class _MyHomePageState extends State<MyHomePage>
     final isLow = glucoseMeasurement['isLow'];
     final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
     final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
+    final patientDevice = connection['patientDevice'] as Map<String, dynamic>?;
+
+    final lowLimit = patientDevice?['ll']?.toDouble() ?? 70.0;
+    final highLimit = patientDevice?['hl']?.toDouble() ?? 180.0;
 
     Color glucoseColor = _getGlucoseColor(value, targetLow, targetHigh);
 
@@ -957,6 +962,8 @@ class _MyHomePageState extends State<MyHomePage>
                       data: combinedData,
                       targetLow: connection['targetLow']?.toDouble() ?? 70.0,
                       targetHigh: connection['targetHigh']?.toDouble() ?? 180.0,
+                      limitLow: lowLimit,      // додати
+                      limitHigh: highLimit,    // додати
                     ),
                   ),
                 ],
@@ -1138,12 +1145,16 @@ class InteractiveGlucoseChart extends StatefulWidget {
   final List<dynamic> data;
   final double targetLow;
   final double targetHigh;
+  final double limitLow;   // додати
+  final double limitHigh;  // додати
 
   const InteractiveGlucoseChart({
     super.key,
     required this.data,
     required this.targetLow,
     required this.targetHigh,
+    required this.limitLow,
+    required this.limitHigh,
   });
 
   @override
@@ -1194,6 +1205,8 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                   maxValue: maxValue,
                   targetLow: widget.targetLow,
                   targetHigh: widget.targetHigh,
+                  limitLow: widget.limitLow,     // додати
+                  limitHigh: widget.limitHigh,   // додати
                   isDark: FluentTheme.of(context).brightness == Brightness.dark,
                   hoveredPoint: _hoveredPoint,
                 ),
@@ -1370,6 +1383,8 @@ class GlucoseChartPainter extends CustomPainter {
   final double maxValue;
   final double targetLow;
   final double targetHigh;
+  final double limitLow;   // додати
+  final double limitHigh;  // додати
   final bool isDark;
   final Offset? hoveredPoint;
 
@@ -1380,6 +1395,8 @@ class GlucoseChartPainter extends CustomPainter {
     required this.maxValue,
     required this.targetLow,
     required this.targetHigh,
+    required this.limitLow,
+    required this.limitHigh,
     required this.isDark,
     this.hoveredPoint,
   });
@@ -1412,6 +1429,31 @@ class GlucoseChartPainter extends CustomPainter {
 
     canvas.drawLine(Offset(0, targetLowY), Offset(size.width, targetLowY), targetLinePaint);
     canvas.drawLine(Offset(0, targetHighY), Offset(size.width, targetHighY), targetLinePaint);
+
+    // Малюємо червоні лінії для ll та hl
+    final limitLinePaint = Paint()
+      ..color = Colors.orange.withOpacity(0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final limitLowY = size.height - ((limitLow - minValue) / (maxValue - minValue)) * size.height;
+    final limitHighY = size.height - ((limitHigh - minValue) / (maxValue - minValue)) * size.height;
+
+    final limitLowPath = Path()
+      ..moveTo(0, limitLowY)
+      ..lineTo(size.width, limitLowY);
+    final limitHighPath = Path()
+      ..moveTo(0, limitHighY)
+      ..lineTo(size.width, limitHighY);
+
+    canvas.drawPath(
+      dashPath(limitLowPath, dashArray: CircularIntervalList<double>(<double>[6, 4])),
+      limitLinePaint,
+    );
+    canvas.drawPath(
+      dashPath(limitHighPath, dashArray: CircularIntervalList<double>(<double>[6, 4])),
+      limitLinePaint,
+    );
 
     if (points.isEmpty) return;
 
