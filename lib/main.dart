@@ -8,6 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:path_drawing/path_drawing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -44,14 +45,18 @@ void main() async {
   }
   
   await windowManager.ensureInitialized();
-  
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(950, 665),
+
+  final prefs = await SharedPreferences.getInstance();
+  final w = prefs.getInt('window_w');
+  final h = prefs.getInt('window_h');
+
+  WindowOptions windowOptions = WindowOptions(
+    size: (w != null && h != null) ? Size(w.toDouble(), h.toDouble()) : const Size(950, 665),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
-    minimumSize: Size(450, 665),
+    minimumSize: const Size(450, 665),
   );
   
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -1129,6 +1134,22 @@ class _MyHomePageState extends State<MyHomePage>
     
     return Colors.green;
   }
+
+  @override
+  void onWindowMove() async {
+  final position = await windowManager.getPosition();
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt('window_x', position.dx.toInt());
+  await prefs.setInt('window_y', position.dy.toInt());
+}
+
+@override
+void onWindowResize() async {
+  final size = await windowManager.getSize();
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt('window_w', size.width.toInt());
+  await prefs.setInt('window_h', size.height.toInt());
+}
 
   @override
   void dispose() {
