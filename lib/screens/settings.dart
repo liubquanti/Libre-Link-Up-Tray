@@ -10,6 +10,7 @@ class SettingsScreen extends StatelessWidget {
   final VoidCallback onToggleNotifications;
   final VoidCallback onRefresh;
   final VoidCallback onLogout;
+  final VoidCallback onShowAbout;
 
   const SettingsScreen({
     super.key,
@@ -21,6 +22,7 @@ class SettingsScreen extends StatelessWidget {
     required this.onToggleNotifications,
     required this.onRefresh,
     required this.onLogout,
+    required this.onShowAbout,
   });
 
   @override
@@ -198,56 +200,60 @@ class SettingsScreen extends StatelessWidget {
 
           const SizedBox(height: 5),
           
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: FluentTheme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF2B2B2B)
-                : const Color(0xFFFBFBFB),
-              border: Border.all(
-              color: FluentTheme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1d1d1d)
-                : const Color(0xFFe5e5e5),
-              width: 1,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onShowAbout,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: FluentTheme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF2B2B2B)
+                  : const Color(0xFFFBFBFB),
+                border: Border.all(
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1d1d1d)
+                    : const Color(0xFFe5e5e5),
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.circular(8),
               ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  FluentSystemIcons.ic_fluent_info_regular,
-                  size: 20,
-                  color: FluentTheme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFffffff)
-                    : const Color(0xFF1b1b1b),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'App information',
-                        style: theme.typography.body?.copyWith(
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      Text(
-                        'Version and developer',
-                        style: theme.typography.caption,
-                      ),
-                    ],
+              child: Row(
+                children: [
+                  Icon(
+                    FluentSystemIcons.ic_fluent_info_regular,
+                    size: 20,
+                    color: FluentTheme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFffffff)
+                      : const Color(0xFF1b1b1b),
                   ),
-                ),
-                Icon(
-                  FluentSystemIcons.ic_fluent_chevron_right_regular,
-                  size: 16,
-                  color: FluentTheme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFffffff)
-                    : const Color(0xFF1b1b1b),
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'App information',
+                          style: theme.typography.body?.copyWith(
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          'Version and developer',
+                          style: theme.typography.caption,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    FluentSystemIcons.ic_fluent_chevron_right_regular,
+                    size: 16,
+                    color: FluentTheme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFffffff)
+                      : const Color(0xFF1b1b1b),
+                  ),
+                ],
+              ),
             ),
           ),
           

@@ -17,6 +17,7 @@ import 'services/icons.dart';
 import 'screens/login.dart';
 import 'screens/settings.dart';
 import 'screens/logbook.dart';
+import 'screens/about.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -135,6 +136,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool _hasShownWindowOnStartup = false;
   bool _showSettings = false;
   bool _showLogbook = false;
+  bool _showAbout = false;
   
   bool _wasOutOfRange = false;
   int? _lastGlucoseValue;
@@ -713,29 +715,42 @@ class _MyHomePageState extends State<MyHomePage>
           Expanded(
             child: ScaffoldPage(
               padding: EdgeInsets.zero,
-              content: _showLogbook
-                  ? LogbookScreen(
+              content: _showAbout
+                  ? AboutScreen(
                       onBack: () {
                         setState(() {
-                          _showLogbook = false;
+                          _showAbout = false;
                         });
                       },
-                      service: _service,
                     )
-                  : _showSettings
-                      ? SettingsScreen(
-                          autoStartEnabled: _autoStartEnabled,
-                          isDarkTheme: _iconService.isDarkTheme,
-                          notificationsEnabled: _notificationsEnabled,
-                          onToggleAutoStart: _toggleAutoStart,
-                          onToggleTheme: _toggleTheme,
-                          onToggleNotifications: _toggleNotifications,
-                          onRefresh: _updateGlucoseData,
-                          onLogout: _logout,
+                  : _showLogbook
+                      ? LogbookScreen(
+                          onBack: () {
+                            setState(() {
+                              _showLogbook = false;
+                            });
+                          },
+                          service: _service,
                         )
-                      : _glucoseData == null
-                          ? const Center(child: ProgressRing())
-                          : _buildGlucoseDisplay(),
+                      : _showSettings
+                          ? SettingsScreen(
+                              autoStartEnabled: _autoStartEnabled,
+                              isDarkTheme: _iconService.isDarkTheme,
+                              notificationsEnabled: _notificationsEnabled,
+                              onToggleAutoStart: _toggleAutoStart,
+                              onToggleTheme: _toggleTheme,
+                              onToggleNotifications: _toggleNotifications,
+                              onRefresh: _updateGlucoseData,
+                              onLogout: _logout,
+                              onShowAbout: () {
+                                setState(() {
+                                  _showAbout = true;
+                                });
+                              },
+                            )
+                          : _glucoseData == null
+                              ? const Center(child: ProgressRing())
+                              : _buildGlucoseDisplay(),
             ),
           ),
         ],
