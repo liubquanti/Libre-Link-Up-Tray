@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:fluentui_icons/fluentui_icons.dart';
 
 class SettingsScreen extends StatelessWidget {
   final bool autoStartEnabled;
@@ -32,7 +33,7 @@ class SettingsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           
-          const SizedBox(height: 10),
+          const SizedBox(height: 18),
           const Text(
             'Settings',
             style: TextStyle(
@@ -40,7 +41,7 @@ class SettingsScreen extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(15),
@@ -59,7 +60,8 @@ class SettingsScreen extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  autoStartEnabled ? FluentIcons.play : FluentIcons.play,
+                  FluentSystemIcons.ic_fluent_play_regular,
+                  size: 20,
                   color: FluentTheme.of(context).brightness == Brightness.dark
                     ? const Color(0xFFffffff)
                     : const Color(0xFF1b1b1b),
@@ -110,7 +112,8 @@ class SettingsScreen extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  notificationsEnabled ? FluentIcons.ringer : FluentIcons.ringer_off,
+                  FluentSystemIcons.ic_fluent_alert_regular,
+                  size: 20,
                   color: FluentTheme.of(context).brightness == Brightness.dark
                     ? const Color(0xFFffffff)
                     : const Color(0xFF1b1b1b),
@@ -161,7 +164,8 @@ class SettingsScreen extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  isDarkTheme ? FluentIcons.color : FluentIcons.brightness,
+                  FluentSystemIcons.ic_fluent_color_regular,
+                  size: 20,
                   color: FluentTheme.of(context).brightness == Brightness.dark
                     ? const Color(0xFFffffff)
                     : const Color(0xFF1b1b1b),
@@ -212,7 +216,8 @@ class SettingsScreen extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  FluentIcons.info,
+                  FluentSystemIcons.ic_fluent_info_regular,
+                  size: 20,
                   color: FluentTheme.of(context).brightness == Brightness.dark
                     ? const Color(0xFFffffff)
                     : const Color(0xFF1b1b1b),
@@ -236,8 +241,8 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  FluentIcons.chevron_right_med,
-                  size: 10,
+                  FluentSystemIcons.ic_fluent_chevron_right_regular,
+                  size: 16,
                   color: FluentTheme.of(context).brightness == Brightness.dark
                     ? const Color(0xFFffffff)
                     : const Color(0xFF1b1b1b),

@@ -601,20 +601,25 @@ class _MyHomePageState extends State<MyHomePage>
             mainAxisSize: MainAxisSize.min,
             children: [
               if (_isLoggedIn) ...[
-                Container(
+                SizedBox(
                   width: 45,
-                  height: 32,
-                  child: IconButton(
+                    child: IconButton(
+                    style: ButtonStyle(
+                      shape: WidgetStateProperty.all(const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
+                      side: BorderSide.none,
+                      )),
+                    ),
                     icon: Icon(
-                      _showSettings ? FluentIcons.home : FluentIcons.settings,
-                      size: 13,
+                      _showSettings ? FluentSystemIcons.ic_fluent_home_regular : FluentSystemIcons.ic_fluent_settings_regular,
+                      size: 16,
                       color: FluentTheme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFffffff)
-                        : const Color(0xFF1b1b1b),
+                      ? const Color(0xFFc5c5c5)
+                      : const Color(0xFF1b1b1b),
                     ),
                     onPressed: () {
                       setState(() {
-                        _showSettings = !_showSettings;
+                      _showSettings = !_showSettings;
                       });
                     },
                   ),
@@ -778,7 +783,7 @@ class _MyHomePageState extends State<MyHomePage>
         children: [
           const SizedBox(height: 10),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 '${connection['firstName']} ${connection['lastName']}',
@@ -788,12 +793,31 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
               ),
               const Spacer(),
-              FilledButton(
+                FilledButton(
                 style: ButtonStyle(
                   backgroundColor: WidgetStatePropertyAll(SystemTheme.accentColor.accent),
                 ),
                 onPressed: null,
-                child: Text('Logbook', style: TextStyle(color: valueColor)),
+                child: Row(
+                  children: [
+                  Icon(
+                    FluentSystemIcons.ic_fluent_notebook_filled,
+                    size: 16,
+                    color: FluentTheme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF000000)
+                      : const Color(0xFFFFFFFF),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Logbook',
+                    style: TextStyle(
+                    color: FluentTheme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF000000)
+                      : const Color(0xFFFFFFFF),
+                    ),
+                  ),
+                  ],
+                ),
               ),
             ],
           ),
