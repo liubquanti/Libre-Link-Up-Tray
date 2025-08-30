@@ -90,7 +90,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
                     return const Center(child: Text('No logbook entries'));
                   }
                   final grouped = _groupByDate(logbook);
-                  final dateKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a)); // новіші дати зверху
+                  final dateKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 26.0),
                     itemCount: dateKeys.length,

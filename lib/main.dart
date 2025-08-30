@@ -850,36 +850,58 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
               ),
               const Spacer(),
-                FilledButton(
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStatePropertyAll(SystemTheme.accentColor.accent),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _showLogbook = true;
-                    });
-                  },
-                  child: Row(
-                    children: [
-                      Icon(
-                        FluentSystemIcons.ic_fluent_notebook_filled,
-                        size: 16,
+              FilledButton(
+                style: ButtonStyle(
+                  backgroundColor: WidgetStatePropertyAll(SystemTheme.accentColor.accent),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showLogbook = true;
+                  });
+                },
+                child: Row(
+                  children: [
+                    Icon(
+                      FluentSystemIcons.ic_fluent_notebook_filled,
+                      size: 19,
+                      color: FluentTheme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF000000)
+                        : const Color(0xFFFFFFFF),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Logbook',
+                      style: TextStyle(
                         color: FluentTheme.of(context).brightness == Brightness.dark
                           ? const Color(0xFF000000)
                           : const Color(0xFFFFFFFF),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Logbook',
-                        style: TextStyle(
-                          color: FluentTheme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF000000)
-                            : const Color(0xFFFFFFFF),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
+              const SizedBox(width: 4),
+              FilledButton(
+                style: ButtonStyle(
+                  backgroundColor: WidgetStatePropertyAll(SystemTheme.accentColor.accent),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showSettings = true;
+                  });
+                },
+                child: Row(
+                  children: [
+                    Icon(
+                      FluentSystemIcons.ic_fluent_settings_filled,
+                      size: 19,
+                      color: FluentTheme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF000000)
+                        : const Color(0xFFFFFFFF),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
