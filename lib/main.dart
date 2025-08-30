@@ -560,25 +560,64 @@ class _MyHomePageState extends State<MyHomePage>
   Widget _buildCustomTitleBar() {
     final theme = FluentTheme.of(context);
 
-    IconData mainIcon;
-    VoidCallback mainAction;
-
-    if (_showLogbook) {
-      mainIcon = FluentSystemIcons.ic_fluent_arrow_left_regular;
-      mainAction = () {
-        setState(() {
-          _showLogbook = false;
-        });
-      };
+    Widget leading;
+    if (_showSettings || _showLogbook || _showAbout) { // Додаємо _showAbout
+      leading = Row(
+        children: [
+          IconButton(
+            icon: const Icon(FluentSystemIcons.ic_fluent_arrow_left_regular, size: 16),
+            onPressed: () {
+              setState(() {
+                if (_showAbout) {
+                  _showAbout = false;
+                  _showSettings = true; // Повертає на екран налаштувань
+                } else {
+                  _showSettings = false;
+                  _showLogbook = false;
+                }
+              });
+            },
+            style: ButtonStyle(
+              shape: WidgetStateProperty.all(const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+                side: BorderSide.none,
+              )),
+            ),
+          ),
+          const SizedBox(width: 2),
+          Text(
+            'LibreLinkUpTray',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: theme.brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black,
+            ),
+          ),
+        ],
+      );
     } else {
-      mainIcon = _showSettings
-          ? FluentSystemIcons.ic_fluent_home_regular
-          : FluentSystemIcons.ic_fluent_settings_regular;
-      mainAction = () {
-        setState(() {
-          _showSettings = !_showSettings;
-        });
-      };
+      leading = Row(
+        children: [
+          Image.asset(
+            'assets/icon/icon.png',
+            width: 16,
+            height: 16,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'LibreLinkUpTray',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: theme.brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black,
+            ),
+          ),
+        ],
+      );
     }
 
     return Container(
@@ -604,30 +643,13 @@ class _MyHomePageState extends State<MyHomePage>
               child: Container(
                 height: 32,
                 width: double.infinity,
-                padding: const EdgeInsets.only(left: 10),
+                padding: (_showSettings || _showLogbook || _showAbout)
+                    ? EdgeInsets.zero
+                    : const EdgeInsets.only(left: 10),
                 color: Colors.transparent,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/icon/icon.png',
-                        width: 16,
-                        height: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'LibreLinkUpTray',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: theme.brightness == Brightness.dark
-                              ? Colors.white
-                              : Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: leading,
                 ),
               ),
             ),
@@ -635,27 +657,6 @@ class _MyHomePageState extends State<MyHomePage>
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_isLoggedIn) ...[
-                SizedBox(
-                  width: 45,
-                  child: IconButton(
-                    style: ButtonStyle(
-                      shape: WidgetStateProperty.all(const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                        side: BorderSide.none,
-                      )),
-                    ),
-                    icon: Icon(
-                      mainIcon,
-                      size: 16,
-                      color: theme.brightness == Brightness.dark
-                          ? const Color(0xFFc5c5c5)
-                          : const Color(0xFF1b1b1b),
-                    ),
-                    onPressed: mainAction,
-                  ),
-                ),
-              ],
               WindowCaptionButton.minimize(
                 brightness: theme.brightness,
                 onPressed: () => windowManager.minimize(),
@@ -720,6 +721,7 @@ class _MyHomePageState extends State<MyHomePage>
                       onBack: () {
                         setState(() {
                           _showAbout = false;
+                          _showSettings = true; // Повертає на екран налаштувань
                         });
                       },
                     )
@@ -745,6 +747,7 @@ class _MyHomePageState extends State<MyHomePage>
                               onShowAbout: () {
                                 setState(() {
                                   _showAbout = true;
+                                  _showSettings = false;
                                 });
                               },
                             )

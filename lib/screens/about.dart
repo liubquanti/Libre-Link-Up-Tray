@@ -26,71 +26,66 @@ class AboutScreen extends StatelessWidget {
                   color: theme.micaBackgroundColor,
                   child: Row(
                     children: [
-                    IconButton(
-                      icon: const Icon(FluentIcons.back),
-                      onPressed: onBack,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'About',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Creator',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: FluentTheme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF2B2B2B)
-                    : const Color(0xFFFBFBFB),
-                  border: Border.all(
-                  color: FluentTheme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF1d1d1d)
-                    : const Color(0xFFe5e5e5),
-                  width: 1,
+                      const Text(
+                        'About',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Column(
-                  children: [
-                    const Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 25,
-                          backgroundImage: AssetImage('assets/photos/liubquanti.png'),
-                        ),
-                        SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'liubquanti',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'UI/UX and coding',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
-                            ),
-                          ],
-                        )
-                      ],
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Creator',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: FluentTheme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF2B2B2B)
+                      : const Color(0xFFFBFBFB),
+                    border: Border.all(
+                    color: FluentTheme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1d1d1d)
+                      : const Color(0xFFe5e5e5),
+                    width: 1,
                     ),
-                    const SizedBox(height: 10),
-                    Row(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      const Row(
                         children: [
-                        FilledButton(
-                          child: SvgPicture.string('''<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-brand-telegram"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4" /></svg>''',
+                          CircleAvatar(
+                            radius: 25,
+                            backgroundImage: AssetImage('assets/photos/liubquanti.png'),
+                          ),
+                          SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'liubquanti',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'UI/UX and coding',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                          children: [
+                          FilledButton(
+                            child: SvgPicture.string('''<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-brand-telegram"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4" /></svg>''',
                             width: 20,
                             height: 20,
                           ),
