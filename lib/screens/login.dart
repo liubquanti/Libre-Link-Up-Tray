@@ -16,11 +16,16 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
+  late FocusNode _emailFocus;
+  late FocusNode _passwordFocus;
+
   final LibreLinkService _service = LibreLinkService();
 
   @override
   void initState() {
     super.initState();
+    _emailFocus = FocusNode();
+    _passwordFocus = FocusNode();
     _tryAutoLogin();
   }
 
@@ -141,19 +146,24 @@ class _LoginScreenState extends State<LoginScreen> {
                         label: 'Email',
                         child: TextBox(
                           controller: _emailController,
+                          focusNode: _emailFocus,
                           placeholder: 'Enter your email',
                           keyboardType: TextInputType.emailAddress,
+                          onSubmitted: (_) {
+                            FocusScope.of(context).requestFocus(_passwordFocus);
+                          },
                         ),
                       ),
-                      
                       const SizedBox(height: 10),
-                      
                       InfoLabel(
                         label: 'Password',
                         child: PasswordBox(
                           controller: _passwordController,
+                          focusNode: _passwordFocus,
                           placeholder: 'Enter your password',
-
+                          onSubmitted: (_) {
+                            if (!_isLoading) _login();
+                          },
                         ),
                       ),
                       
@@ -179,6 +189,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               : const Text('Log in'),
                         ),
                       ),
+                      const SizedBox(height: 24),
+                        Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          'The sensor housing, FreeStyle, Libre, and related brand marks are marks of Abbott. Other trademarks are the property of their respective owners.',
+                          style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[100],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     ]
                   )
                 ),
@@ -188,12 +210,5 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }
