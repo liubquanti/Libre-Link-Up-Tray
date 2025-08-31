@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutScreen extends StatelessWidget {
   final VoidCallback onBack;
@@ -11,26 +12,23 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = FluentTheme.of(context);
-
     return FutureBuilder<PackageInfo>(
       future: _getInfo(),
       builder: (context, snapshot) {
-        return NavigationView(
-          content: Padding(
+        return SingleChildScrollView(
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 26),
             child: Column(
               children: [
-                Container(
-                  height: 35,
-                  color: theme.micaBackgroundColor,
-                  child: Row(
-                    children: [
-                      const Text(
-                        'About',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                const SizedBox(height: 18),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                  'About',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                   ),
                 ),
                 const Align(
@@ -89,7 +87,7 @@ class AboutScreen extends StatelessWidget {
                             width: 20,
                             height: 20,
                           ),
-                          onPressed: () {},
+                          onPressed: () {launchUrl(Uri.parse('https://t.me/liubquanti'));},
                         ),
                         const SizedBox(width: 8),
                         FilledButton(
@@ -97,7 +95,7 @@ class AboutScreen extends StatelessWidget {
                             width: 20,
                             height: 20,
                           ),
-                          onPressed: () {},
+                          onPressed: () {launchUrl(Uri.parse('https://instagram.com/liubquanti'));},
                         ),
                         const SizedBox(width: 8),
                         FilledButton(
@@ -105,7 +103,7 @@ class AboutScreen extends StatelessWidget {
                             width: 20,
                             height: 20,
                           ),
-                          onPressed: () {},
+                          onPressed: () {launchUrl(Uri.parse('https://www.figma.com/@liubquanti'));},
                         ),
                         const SizedBox(width: 8),
                         FilledButton(
@@ -113,7 +111,7 @@ class AboutScreen extends StatelessWidget {
                             width: 20,
                             height: 20,
                           ),
-                          onPressed: () {},
+                          onPressed: () {launchUrl(Uri.parse('https://github.com/liubquanti'));},
                         ),
                       ],
                     )
@@ -158,12 +156,12 @@ class AboutScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'LibreLink API',
+                              'LibreView API',
                               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'UI/UX and coding',
+                              'Glucose monitoring API',
                               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
                             ),
                           ],
@@ -180,13 +178,148 @@ class AboutScreen extends StatelessWidget {
                         children: [
                         FilledButton(
                           child: const Icon(FluentSystemIcons.ic_fluent_globe_regular, size: 20),
-                          onPressed: () {},
+                          onPressed: () {launchUrl(Uri.parse('https://libreview-unofficial.stoplight.io/'));},
                         ),
                       ],
                     )
                   ],
                 )
               ),
+              const SizedBox(height: 10),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Support app',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2B2B2B)
+                    : const Color(0xFFFBFBFB),
+                  border: Border.all(
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1d1d1d)
+                    : const Color(0xFFe5e5e5),
+                  width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      height: 31,
+                      child: Button(
+                        onPressed: () {
+                          launchUrl(Uri.parse('https://apps.microsoft.com/detail/9N7DPSS8QMVF'));
+                        },
+                        child: const Text('Leave a review'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 31,
+                      child: Button(
+                        onPressed: () {
+                          launchUrl(Uri.parse('https://github.com/liubquanti/Libre-Link-Up-Tray'));
+                        },
+                        child: const Text('Give a star'),
+                      ),
+                    ),
+                  ],
+                )
+              ),
+              const SizedBox(height: 10),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'App info',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2B2B2B)
+                    : const Color(0xFFFBFBFB),
+                  border: Border.all(
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1d1d1d)
+                    : const Color(0xFFe5e5e5),
+                  width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Version',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                        ),
+                        Text(
+                          snapshot.hasData ? snapshot.data!.version : 'Loading...',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Build',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                        ),
+                        Text(
+                          snapshot.hasData ? snapshot.data!.buildNumber : 'Loading...',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Package',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                        ),
+                        Text(
+                          snapshot.hasData ? snapshot.data!.packageName : 'Loading...',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Installer',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                        ),
+                        Text(
+                          snapshot.hasData ? (snapshot.data!.installerStore ?? 'Unknown') : 'Loading...',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              ),
+              const SizedBox(height: 26),
             ],
           ),
           ),
