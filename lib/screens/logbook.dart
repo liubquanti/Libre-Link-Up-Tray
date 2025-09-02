@@ -92,7 +92,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
                   final grouped = _groupByDate(logbook);
                   final dateKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 26.0),
+                    padding: const EdgeInsets.only(left: 26.0, right: 26.0, bottom: 18.0),
                     itemCount: dateKeys.length,
                     itemBuilder: (context, dateIndex) {
                       final date = dateKeys[dateIndex];

@@ -60,4 +60,3 @@ msix_config:
   msix_version: 0.0.1.0
   logo_path: assets/icon/icon.png
   capabilities: internetClient
-  store: true
