@@ -23,7 +23,7 @@ class LibreLinkService {
     'connection': 'Keep-Alive',
     'content-type': 'application/json',
     'product': 'llu.android',
-    'version': '4.12.0',
+    'version': '4.16.0',
   };
 
   Map<String, String> get _authHeaders => {
