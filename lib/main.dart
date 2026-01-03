@@ -39,15 +39,17 @@ void main() async {
     appPath: Platform.resolvedExecutable,
     packageName: 'liubquanti.librelinkup.tray',
   );
+  final prefs = await SharedPreferences.getInstance();
+  final storedAutoStart = prefs.getBool('auto_start_enabled') ?? true;
   
   bool isEnabled = await launchAtStartup.isEnabled();
-  if (!isEnabled) {
+  if (storedAutoStart && !isEnabled) {
     await launchAtStartup.enable();
+  } else if (!storedAutoStart && isEnabled) {
+    await launchAtStartup.disable();
   }
   
   await windowManager.ensureInitialized();
-
-  final prefs = await SharedPreferences.getInstance();
   final w = prefs.getInt('window_w');
   final h = prefs.getInt('window_h');
 
@@ -131,6 +133,7 @@ class _MyHomePageState extends State<MyHomePage>
   Timer? _relativeTimeTimer;
   Map<String, dynamic>? _glucoseData;
   bool _isInitialized = false;
+  bool _followSystemTheme = true;
   bool _isBlinking = false;
   bool _showAlert = false;
   bool _autoStartEnabled = false;
@@ -151,6 +154,9 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> _initializeApp() async {
     try {
+      await _loadThemePreference();
+      await _loadNotificationPreference();
+      await _loadAutoStartPreference();
       await _initTray();
       windowManager.addListener(this);
       await _checkLoginStatus();
@@ -181,12 +187,66 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedFollowSystem = prefs.getBool('tray_icon_follow_system');
+    final storedThemeIsDark = prefs.getBool('tray_icon_dark_theme');
+
+    final systemIsDark = WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+
+    setState(() {
+      _followSystemTheme = storedFollowSystem ?? true;
+    });
+
+    final shouldUseDarkTheme = _followSystemTheme
+        ? systemIsDark
+        : (storedThemeIsDark ?? systemIsDark);
+
+    _iconService.setTheme(shouldUseDarkTheme);
+    _iconService.clearCache();
+  }
+
+  Future<void> _saveThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('tray_icon_dark_theme', _iconService.isDarkTheme);
+    await prefs.setBool('tray_icon_follow_system', _followSystemTheme);
+  }
+
+  Future<void> _loadNotificationPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedNotifications = prefs.getBool('notifications_enabled');
+    setState(() {
+      _notificationsEnabled = storedNotifications ?? _notificationsEnabled;
+    });
+  }
+
+  Future<void> _saveNotificationPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', _notificationsEnabled);
+  }
+
+  Future<void> _loadAutoStartPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedAutoStart = prefs.getBool('auto_start_enabled');
+    if (storedAutoStart != null) {
+      setState(() {
+        _autoStartEnabled = storedAutoStart;
+      });
+    }
+  }
+
+  Future<void> _saveAutoStartPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('auto_start_enabled', _autoStartEnabled);
+  }
+
   Future<void> _checkAutoStartStatus() async {
     try {
       final isEnabled = await launchAtStartup.isEnabled();
       setState(() {
         _autoStartEnabled = isEnabled;
       });
+      await _saveAutoStartPreference();
     } catch (e) {
       print('Error checking auto-start status: $e');
     }
@@ -200,6 +260,7 @@ class _MyHomePageState extends State<MyHomePage>
         await launchAtStartup.enable();
       }
       await _checkAutoStartStatus();
+      await _saveAutoStartPreference();
       
       await _updateTrayContextMenu();
     } catch (e) {
@@ -218,10 +279,12 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
-  void _toggleNotifications() {
+  void _toggleNotifications() async {
     setState(() {
       _notificationsEnabled = !_notificationsEnabled;
     });
+    await _saveNotificationPreference();
+    await _updateTrayContextMenu();
   }
 
   Map<String, double> _getAlarmLimits(Map<String, dynamic> connection) {
@@ -265,7 +328,9 @@ class _MyHomePageState extends State<MyHomePage>
     });
   }
 
-  void _checkThemeChange() {
+  void _checkThemeChange() async {
+    if (!_followSystemTheme) return;
+
     final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
     final isDark = brightness == Brightness.dark;
     
@@ -273,6 +338,7 @@ class _MyHomePageState extends State<MyHomePage>
       _iconService.setTheme(isDark);
       _iconService.clearCache();
       _updateTrayIcon();
+      await _saveThemePreference();
     }
   }
 
@@ -543,9 +609,12 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
-  void _toggleTheme() {
+  void _toggleTheme() async {
+    _followSystemTheme = false;
     _iconService.setTheme(!_iconService.isDarkTheme);
     _iconService.clearCache();
+    await _saveThemePreference();
+    setState(() {});
     _updateTrayIcon();
   }
 
