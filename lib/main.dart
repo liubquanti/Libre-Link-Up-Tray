@@ -128,6 +128,7 @@ class _MyHomePageState extends State<MyHomePage>
   Timer? _updateTimer;
   Timer? _themeCheckTimer;
   Timer? _alertTimer;
+  Timer? _relativeTimeTimer;
   Map<String, dynamic>? _glucoseData;
   bool _isInitialized = false;
   bool _isBlinking = false;
@@ -286,6 +287,7 @@ class _MyHomePageState extends State<MyHomePage>
             _isLoggedIn = true;
           });
           _startPeriodicUpdate();
+          _startRelativeTimeTicker();
         }
       }
     } catch (e) {
@@ -297,6 +299,14 @@ class _MyHomePageState extends State<MyHomePage>
     _updateGlucoseData();
     _updateTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       _updateGlucoseData();
+    });
+  }
+
+  void _startRelativeTimeTicker() {
+    _relativeTimeTimer?.cancel();
+    _relativeTimeTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || !_isLoggedIn) return;
+      setState(() {});
     });
   }
 
@@ -548,6 +558,7 @@ class _MyHomePageState extends State<MyHomePage>
     _updateTimer?.cancel();
     _themeCheckTimer?.cancel();
     _alertTimer?.cancel();
+    _relativeTimeTimer?.cancel();
     trayManager.destroy();
     windowManager.destroy();
   }
@@ -557,6 +568,7 @@ class _MyHomePageState extends State<MyHomePage>
       await _service.logout();
       _updateTimer?.cancel();
       _alertTimer?.cancel();
+      _relativeTimeTimer?.cancel();
       setState(() {
         _isLoggedIn = false;
         _glucoseData = null;
@@ -581,6 +593,7 @@ class _MyHomePageState extends State<MyHomePage>
       _isLoggedIn = true;
     });
     _startPeriodicUpdate();
+    _startRelativeTimeTicker();
     windowManager.hide();
   }
 
@@ -1227,6 +1240,7 @@ void onWindowResize() async {
     _updateTimer?.cancel();
     _themeCheckTimer?.cancel();
     _alertTimer?.cancel();
+    _relativeTimeTimer?.cancel();
     windowManager.removeListener(this);
     trayManager.removeListener(this);
     super.dispose();
@@ -1638,23 +1652,46 @@ class GlucoseChartPainter extends CustomPainter {
 
 String formatApiDate(String apiDate) {
   try {
-    final regex = RegExp(r'(\d{1,2})/(\d{1,2})/(\d{4}) (\d{1,2}):(\d{2}):(\d{2}) ([AP]M)');
-    final match = regex.firstMatch(apiDate);
-    if (match != null) {
-      final month = int.parse(match.group(1)!);
-      final day = int.parse(match.group(2)!);
-      final year = int.parse(match.group(3)!);
-      var hour = int.parse(match.group(4)!);
-      final minute = int.parse(match.group(5)!);
-      final second = int.parse(match.group(6)!);
-      final ampm = match.group(7)!;
+    DateTime? parsed = DateTime.tryParse(apiDate);
 
-      if (ampm == 'PM' && hour != 12) hour += 12;
-      if (ampm == 'AM' && hour == 12) hour = 0;
+    if (parsed == null) {
+      final regex = RegExp(r'(\d{1,2})/(\d{1,2})/(\d{4}) (\d{1,2}):(\d{2}):(\d{2}) ([AP]M)');
+      final match = regex.firstMatch(apiDate);
 
-      final dt = DateTime(year, month, day, hour, minute, second);
-      return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      if (match != null) {
+        final month = int.parse(match.group(1)!);
+        final day = int.parse(match.group(2)!);
+        final year = int.parse(match.group(3)!);
+        var hour = int.parse(match.group(4)!);
+        final minute = int.parse(match.group(5)!);
+        final second = int.parse(match.group(6)!);
+        final ampm = match.group(7)!;
+
+        if (ampm == 'PM' && hour != 12) hour += 12;
+        if (ampm == 'AM' && hour == 12) hour = 0;
+
+        parsed = DateTime(year, month, day, hour, minute, second);
+      }
     }
+
+    if (parsed == null) return apiDate;
+
+    var diff = DateTime.now().difference(parsed);
+    if (diff.isNegative) diff = Duration.zero;
+
+    final seconds = diff.inSeconds;
+    if (seconds < 60) {
+      if (seconds <= 1) return 'just now';
+      return '$seconds seconds ago';
+    }
+
+    final minutes = diff.inMinutes;
+    if (minutes < 60) {
+      return minutes == 1 ? '1 minute ago' : '$minutes minutes ago';
+    }
+
+    final hours = diff.inHours;
+    return hours == 1 ? '1 hour ago' : '$hours hours ago';
   } catch (e) {
     print('Date parse error: $e');
   }
