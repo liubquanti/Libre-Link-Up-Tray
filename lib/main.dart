@@ -37,7 +37,7 @@ void main() async {
   launchAtStartup.setup(
     appName: packageInfo.appName,
     appPath: Platform.resolvedExecutable,
-    packageName: 'liubquanti.librelinkup.tray',
+    packageName: 'liubquanti.LibreLinkUpTray',
   );
   final prefs = await SharedPreferences.getInstance();
   final storedAutoStart = prefs.getBool('auto_start_enabled') ?? true;
