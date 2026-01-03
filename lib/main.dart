@@ -223,6 +223,41 @@ class _MyHomePageState extends State<MyHomePage>
     });
   }
 
+  Map<String, double> _getAlarmLimits(Map<String, dynamic> connection) {
+    final alarmRules = connection['alarmRules'] as Map<String, dynamic>?;
+    final lowRule = alarmRules?['l'] as Map<String, dynamic>?;
+    final highRule = alarmRules?['h'] as Map<String, dynamic>?;
+
+    double? lowLimit = _readRuleThreshold(lowRule);
+    double? highLimit = _readRuleThreshold(highRule);
+
+    final patientDevice = connection['patientDevice'] as Map<String, dynamic>?;
+
+    lowLimit ??= _asDouble(patientDevice?['ll']);
+    highLimit ??= _asDouble(patientDevice?['hl']);
+
+    return {
+      'low': lowLimit ?? 70.0,
+      'high': highLimit ?? 180.0,
+    };
+  }
+
+  double? _readRuleThreshold(Map<String, dynamic>? rule) {
+    if (rule == null) return null;
+    if (rule['on'] == false) return null;
+
+    final threshold = rule['th'];
+    if (threshold is num) return threshold.toDouble();
+    if (threshold is String) return double.tryParse(threshold);
+    return null;
+  }
+
+  double? _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
   void _startThemeMonitoring() {
     _themeCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _checkThemeChange();
@@ -283,16 +318,14 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> _checkForNotifications() async {
     if (!_notificationsEnabled || _glucoseData == null) return;
 
-    final connection = _glucoseData!['connection'];
+    final connection = _glucoseData!['connection'] as Map<String, dynamic>;
     final glucoseMeasurement = connection['glucoseMeasurement'];
     if (glucoseMeasurement == null) return;
 
     final value = glucoseMeasurement['Value'] as int;
-    final patientDevice = connection['patientDevice'] as Map<String, dynamic>?;
-
-    // Використовуємо ll та hl з patientDevice, якщо є
-    final lowLimit = patientDevice?['ll']?.toDouble() ?? 70.0;
-    final highLimit = patientDevice?['hl']?.toDouble() ?? 180.0;
+    final alarmLimits = _getAlarmLimits(connection);
+    final lowLimit = alarmLimits['low']!;
+    final highLimit = alarmLimits['high']!;
     final firstName = connection['firstName'] ?? 'User';
 
     final isCurrentlyOutOfRange = value < lowLimit || value > highLimit;
@@ -323,15 +356,14 @@ class _MyHomePageState extends State<MyHomePage>
   bool _isGlucoseOutOfRange() {
     if (_glucoseData == null) return false;
 
-    final connection = _glucoseData!['connection'];
+    final connection = _glucoseData!['connection'] as Map<String, dynamic>;
     final glucoseMeasurement = connection['glucoseMeasurement'];
     if (glucoseMeasurement == null) return false;
 
     final value = glucoseMeasurement['Value'] as int;
-    final patientDevice = connection['patientDevice'] as Map<String, dynamic>?;
-
-    final lowLimit = patientDevice?['ll']?.toDouble() ?? 70.0;
-    final highLimit = patientDevice?['hl']?.toDouble() ?? 180.0;
+    final alarmLimits = _getAlarmLimits(connection);
+    final lowLimit = alarmLimits['low']!;
+    final highLimit = alarmLimits['high']!;
 
     return value < lowLimit || value > highLimit;
   }
@@ -762,7 +794,7 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildGlucoseDisplay() {
-    final connection = _glucoseData!['connection'];
+    final connection = _glucoseData!['connection'] as Map<String, dynamic>;
     final glucoseMeasurement = connection['glucoseMeasurement'];
     final graphData = _glucoseData!['graphData'] as List?;
     final activeSensors = _glucoseData!['activeSensors'] as List?;
@@ -783,10 +815,9 @@ class _MyHomePageState extends State<MyHomePage>
     final isLow = glucoseMeasurement['isLow'];
     final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
     final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
-    final patientDevice = connection['patientDevice'] as Map<String, dynamic>?;
-
-    final lowLimit = patientDevice?['ll']?.toDouble() ?? 70.0;
-    final highLimit = patientDevice?['hl']?.toDouble() ?? 180.0;
+    final alarmLimits = _getAlarmLimits(connection);
+    final lowLimit = alarmLimits['low']!;
+    final highLimit = alarmLimits['high']!;
 
     Color glucoseColor = _getGlucoseColor(value, targetLow, targetHigh);
 
