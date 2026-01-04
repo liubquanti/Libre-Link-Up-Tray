@@ -90,7 +90,7 @@ jobs:
         with:
           tag_name: v${{ steps.extract_tag.outputs.tag_version }}
           name: "v${{ steps.extract_tag.outputs.tag_version }}"
-          body: "Release of version v${{ steps.extract_tag.outputs.tag_version }} for ${{ github.repository }}."
+          body: "Release of version v${{ steps.extract_tag.outputs.tag_version }} for ${{ github.repository }}.\n> [!IMPORTANT]\n> Since MSIX is distributed outside the Microsoft Store, you need to install a special certificate on your computer to install the application. Instructions for doing so can be found in [this video](https://www.youtube.com/watch?v=QKhr7a783wA)."
           files: build/windows/x64/runner/Release/*.msix
           overwrite_files: true
         env:
