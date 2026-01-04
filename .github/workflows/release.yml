@@ -1,0 +1,92 @@
+name: Build and Release Flutter MSIX
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  check-msix-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.check.outputs.version_changed }}
+      new_version: ${{ steps.check.outputs.new_version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get previous pubspec.yaml
+        run: |
+          git fetch origin main --depth=2
+          git show HEAD^:pubspec.yaml > pubspec_old.yaml || echo "" > pubspec_old.yaml
+
+      - name: Check if msix_version changed
+        id: check
+        shell: bash
+        run: |
+          old_version=$(grep 'msix_version:' pubspec_old.yaml | awk '{print $2}')
+          new_version=$(grep 'msix_version:' pubspec.yaml | awk '{print $2}')
+
+          echo "Old MSIX version: $old_version"
+          echo "New MSIX version: $new_version"
+
+          if [ "$old_version" != "$new_version" ] && [ -n "$new_version" ]; then
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+            echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          else
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-release:
+    needs: check-msix-version
+    if: needs.check-msix-version.outputs.version_changed == 'true'
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.6'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Decode MSIX certificate
+        shell: powershell
+        run: |
+          $bytes = [Convert]::FromBase64String("${{ secrets.MSIX_CERT_BASE64 }}")
+          [IO.File]::WriteAllBytes("msix_cert.pfx", $bytes)
+
+      - name: Build Windows app
+        run: flutter build windows --release
+
+      - name: Build MSIX package
+        run: |
+          flutter pub run msix:create `
+            --certificate-path msix_cert.pfx `
+            --certificate-password "${{ secrets.MSIX_CERT_PASSWORD }}"
+
+      - name: Extract tag version
+        id: extract_tag
+        shell: bash
+        run: |
+          full_version="${{ needs.check-msix-version.outputs.new_version }}"
+          echo "tag_version=$full_version" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.extract_tag.outputs.tag_version }}
+          name: "v${{ steps.extract_tag.outputs.tag_version }}"
+          body: "Release of version v${{ steps.extract_tag.outputs.tag_version }} for ${{ github.repository }}."
+          files: build/windows/runner/Release/*.msix
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
