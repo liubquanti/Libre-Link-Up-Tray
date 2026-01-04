@@ -20,6 +20,9 @@ Windows system tray app to check glucose with LibreLinkUp API.
 > [!CAUTION]
 > Never use the app as the only source of information about your glucose level, glucose movement, or sensor expiration date. It is only intended to assist in monitoring, in case of critical situations with glucose levels or sensor status, always check the information in the official FreeStyle LibreLink and LibreLinkUp apps and rely on them only! The author wants to help people make their lives more comfortable, but he doesn't want his mistakes to be responsible for people's deaths.
 
+> [!IMPORTANT]
+> Since MSIX is distributed outside the Microsoft Store, you need to install a special certificate on your computer to install the application. Instructions for doing so can be found in [this video](https://www.youtube.com/watch?v=QKhr7a783wA).
+
 > After launching the application, you need to log in to your LibreLinkUp account, after which the application will be hidden and available in the system tray. To open the application for detailed information, just click on the tray icon.
 
 ## 📊 • Development Stats
