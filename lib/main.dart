@@ -141,6 +141,8 @@ class _MyHomePageState extends State<MyHomePage>
   bool _showSettings = false;
   bool _showLogbook = false;
   bool _showAbout = false;
+  bool _isNoDataStale = false;
+  bool _noDataBlinkVisible = true;
   
   bool _wasOutOfRange = false;
   int? _lastGlucoseValue;
@@ -322,6 +324,44 @@ class _MyHomePageState extends State<MyHomePage>
     return null;
   }
 
+  int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+
+    final str = value.toString();
+    final parsed = DateTime.tryParse(str);
+    if (parsed != null) return parsed;
+
+    return _parseFallbackDate(str);
+  }
+
+  DateTime? _parseFallbackDate(String apiDate) {
+    final regex = RegExp(r'(\d{1,2})/(\d{1,2})/(\d{4}) (\d{1,2}):(\d{2})(?::(\d{2}))? ([AP]M)');
+    final match = regex.firstMatch(apiDate);
+
+    if (match == null) return null;
+
+    final month = int.parse(match.group(1)!);
+    final day = int.parse(match.group(2)!);
+    final year = int.parse(match.group(3)!);
+    var hour = int.parse(match.group(4)!);
+    final minute = int.parse(match.group(5)!);
+    final second = match.group(6) != null ? int.parse(match.group(6)!) : 0;
+    final ampm = match.group(7)!;
+
+    if (ampm.toUpperCase() == 'PM' && hour != 12) hour += 12;
+    if (ampm.toUpperCase() == 'AM' && hour == 12) hour = 0;
+
+    return DateTime(year, month, day, hour, minute, second);
+  }
+
   void _startThemeMonitoring() {
     _themeCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _checkThemeChange();
@@ -372,8 +412,38 @@ class _MyHomePageState extends State<MyHomePage>
     _relativeTimeTimer?.cancel();
     _relativeTimeTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted || !_isLoggedIn) return;
-      setState(() {});
+      final isStale = _isLastUpdateOverdue();
+      setState(() {
+        _isNoDataStale = isStale;
+        if (isStale) {
+          _noDataBlinkVisible = !_noDataBlinkVisible;
+        } else {
+          _noDataBlinkVisible = true;
+        }
+      });
     });
+  }
+
+  bool _isLastUpdateOverdue() {
+    if (_glucoseData == null) return false;
+
+    final connection = _glucoseData!['connection'] as Map<String, dynamic>?;
+    if (connection == null) return false;
+
+    final alarmRules = connection['alarmRules'] as Map<String, dynamic>?;
+    final ndRule = alarmRules?['nd'] as Map<String, dynamic>?;
+    if (ndRule == null) return false;
+
+    final intervalMinutes = _asInt(ndRule['i']);
+    if (intervalMinutes == null || intervalMinutes <= 0) return false;
+
+    final measurement = connection['glucoseMeasurement'] as Map<String, dynamic>?;
+    final tsRaw = measurement?['Timestamp'] ?? measurement?['FactoryTimestamp'];
+    final ts = _parseDateTime(tsRaw);
+    if (ts == null) return false;
+
+    final diffMinutes = DateTime.now().difference(ts).inMinutes;
+    return diffMinutes >= intervalMinutes;
   }
 
   Future<void> _updateGlucoseData() async {
@@ -382,6 +452,8 @@ class _MyHomePageState extends State<MyHomePage>
       if (data != null) {
         setState(() {
           _glucoseData = data;
+          _isNoDataStale = false;
+          _noDataBlinkVisible = true;
         });
         await _checkForNotifications();
         await _updateTrayIcon();
@@ -910,6 +982,9 @@ class _MyHomePageState extends State<MyHomePage>
     if (isLow) valueColor = Colors.red.darker;
 
     Color trendColor = valueColor;
+    final lastUpdateBaseColor = FluentTheme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : Colors.black;
     IconData? trendDisplayArrow;
     switch (trendArrow) {
       case 1: 
@@ -1074,12 +1149,18 @@ class _MyHomePageState extends State<MyHomePage>
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  'Last update: ${formatApiDate(timestamp)}',
-                  style: const TextStyle(
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 120),
+                  style: TextStyle(
                     fontSize: 12,
+                    color: _isNoDataStale
+                        ? (_noDataBlinkVisible ? Colors.red : lastUpdateBaseColor)
+                        : lastUpdateBaseColor,
                   ),
-                  textAlign: TextAlign.center,
+                  child: Text(
+                    'Last update: ${formatApiDate(timestamp)}',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Container(
@@ -1095,39 +1176,37 @@ class _MyHomePageState extends State<MyHomePage>
           
           const SizedBox(height: 8),
           
-          if (combinedData.isNotEmpty) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: FluentTheme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF2B2B2B)
-                  : const Color(0xFFFBFBFB),
-                border: Border.all(
-                color: FluentTheme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1d1d1d)
-                  : const Color(0xFFe5e5e5),
-                width: 1,
-                ),
-                borderRadius: BorderRadius.circular(8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2B2B2B)
+                : const Color(0xFFFBFBFB),
+              border: Border.all(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1d1d1d)
+                : const Color(0xFFe5e5e5),
+              width: 1,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: 200,
-                    child: InteractiveGlucoseChart(
-                      data: combinedData,
-                      targetLow: connection['targetLow']?.toDouble() ?? 70.0,
-                      targetHigh: connection['targetHigh']?.toDouble() ?? 180.0,
-                      limitLow: lowLimit,      // додати
-                      limitHigh: highLimit,    // додати
-                    ),
-                  ),
-                ],
-              ),
+              borderRadius: BorderRadius.circular(8),
             ),
-          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 200,
+                  child: InteractiveGlucoseChart(
+                    data: combinedData,
+                    targetLow: connection['targetLow']?.toDouble() ?? 70.0,
+                    targetHigh: connection['targetHigh']?.toDouble() ?? 180.0,
+                    limitLow: lowLimit,      // додати
+                    limitHigh: highLimit,    // додати
+                  ),
+                ),
+              ],
+            ),
+          ),
 
           const SizedBox(height: 8),
 
@@ -1336,23 +1415,38 @@ class InteractiveGlucoseChart extends StatefulWidget {
   State<InteractiveGlucoseChart> createState() => _InteractiveGlucoseChartState();
 }
 
+class _ChartPoint {
+  final double value;
+  final DateTime timestamp;
+  final bool isCurrent;
+
+  _ChartPoint({required this.value, required this.timestamp, required this.isCurrent});
+}
+
 class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
   Offset? _hoveredPoint;
   String? _hoveredValue;
   String? _hoveredTime;
   Size? _containerSize;
+  List<_ChartPoint> _chartPoints = [];
+  DateTime? _minTime;
+  DateTime? _maxTime;
 
   @override
   Widget build(BuildContext context) {
-    if (widget.data.isEmpty) return const SizedBox();
+    _chartPoints = _prepareChartPoints();
+    if (_chartPoints.isEmpty) {
+      _minTime = null;
+      _maxTime = null;
+      return const SizedBox();
+    }
 
-    final points = widget.data.map((item) {
-      final value = (item['Value'] as num).toDouble();
-      return value;
-    }).toList();
-
+    final points = _chartPoints.map((p) => p.value).toList();
     final minValue = math.min(points.reduce(math.min) - 20, widget.targetLow - 20);
     final maxValue = math.max(points.reduce(math.max) + 20, widget.targetHigh + 20);
+
+    _minTime = _chartPoints.first.timestamp;
+    _maxTime = DateTime.now();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1362,7 +1456,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
           children: [
             MouseRegion(
               onHover: (event) {
-                _updateHoveredPoint(event.localPosition, points, minValue, maxValue);
+                _updateHoveredPoint(event.localPosition, minValue, maxValue);
               },
               onExit: (event) {
                 setState(() {
@@ -1376,6 +1470,9 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                 painter: GlucoseChartPainter(
                   points: points,
                   data: widget.data,
+                  timestamps: _chartPoints.map((p) => p.timestamp).toList(),
+                  minTime: _minTime!,
+                  maxTime: _maxTime!,
                   minValue: minValue,
                   maxValue: maxValue,
                   targetLow: widget.targetLow,
@@ -1466,29 +1563,124 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
     }
   }
 
-  void _updateHoveredPoint(Offset position, List<double> points, double minValue, double maxValue) {
+  void _updateHoveredPoint(Offset position, double minValue, double maxValue) {
+    if (_chartPoints.isEmpty || _minTime == null || _maxTime == null) return;
+
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
-    
+
     if (position.dx < 0 || position.dx > size.width) return;
-    
-    final stepX = size.width / (points.length - 1);
-    final pointIndex = (position.dx / stepX).round().clamp(0, points.length - 1);
-    
-    final x = pointIndex * stepX;
-    final y = size.height - ((points[pointIndex] - minValue) / (maxValue - minValue)) * size.height;
-    
-    final dataItem = widget.data[pointIndex];
-    final value = points[pointIndex].toInt();
-    final timestamp = dataItem['Timestamp'] as String? ?? 
-                     dataItem['FactoryTimestamp'] as String? ?? 
-                     'Unknown';
-    
+
+    final totalMs = math.max(1, _maxTime!.difference(_minTime!).inMilliseconds);
+    final ratio = (position.dx / size.width).clamp(0.0, 1.0);
+    final hoverTime = _minTime!.add(Duration(milliseconds: (totalMs * ratio).round()));
+
+    final nearestIndex = _findNearestIndex(hoverTime);
+    final point = _chartPoints[nearestIndex];
+
+    final pointX = (point.timestamp.difference(_minTime!).inMilliseconds / totalMs) * size.width;
+    final pointY = size.height - ((point.value - minValue) / (maxValue - minValue)) * size.height;
+
     setState(() {
-      _hoveredPoint = Offset(x, y);
-      _hoveredValue = value.toString();
-      _hoveredTime = _formatTimestamp(timestamp);
+      _hoveredPoint = Offset(pointX, pointY);
+      _hoveredValue = point.value.toInt().toString();
+      _hoveredTime = _formatTimestamp(point.timestamp.toIso8601String());
     });
+  }
+
+  int _findNearestIndex(DateTime target) {
+    int nearest = 0;
+    int smallestDelta = (_chartPoints.first.timestamp.difference(target)).abs().inMilliseconds;
+
+    for (int i = 1; i < _chartPoints.length; i++) {
+      final delta = (_chartPoints[i].timestamp.difference(target)).abs().inMilliseconds;
+      if (delta < smallestDelta) {
+        smallestDelta = delta;
+        nearest = i;
+      }
+    }
+
+    return nearest;
+  }
+
+  List<_ChartPoint> _prepareChartPoints() {
+    final now = DateTime.now();
+    final result = <_ChartPoint>[];
+
+    for (final item in widget.data) {
+      final valueRaw = item['Value'];
+      if (valueRaw is! num) continue;
+
+      final timestampRaw = item['Timestamp'] ?? item['FactoryTimestamp'];
+      final timestamp = _parseTimestamp(timestampRaw);
+      if (timestamp == null) continue;
+
+      final boundedTimestamp = timestamp.isAfter(now) ? now : timestamp;
+      result.add(
+        _ChartPoint(
+          value: valueRaw.toDouble(),
+          timestamp: boundedTimestamp,
+          isCurrent: item['isCurrent'] == true,
+        ),
+      );
+    }
+
+    result.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return result;
+  }
+
+  DateTime? _parseTimestamp(dynamic timestamp) {
+    if (timestamp == null) return null;
+
+    try {
+      if (timestamp is DateTime) return timestamp;
+
+      final tsString = timestamp.toString();
+      DateTime? dateTime;
+
+      try {
+        dateTime = DateTime.parse(tsString);
+      } catch (_) {
+        dateTime = _parseFallback(tsString);
+      }
+
+      return dateTime;
+    } catch (e) {
+      print('Error parsing timestamp: $e');
+      return null;
+    }
+  }
+
+  DateTime? _parseFallback(String timestamp) {
+    final parts = timestamp.split(' ');
+    if (parts.length < 2) return null;
+
+    final datePart = parts[0];
+    final timePart = parts[1];
+    final amPm = parts.length > 2 ? parts[2] : '';
+
+    final dateComponents = datePart.split('/');
+    if (dateComponents.length != 3) return null;
+
+    final month = int.tryParse(dateComponents[0]);
+    final day = int.tryParse(dateComponents[1]);
+    final year = int.tryParse(dateComponents[2]);
+    if (month == null || day == null || year == null) return null;
+
+    final timeComponents = timePart.split(':');
+    if (timeComponents.length < 2) return null;
+
+    var hour = int.tryParse(timeComponents[0]);
+    final minute = int.tryParse(timeComponents[1]);
+    if (hour == null || minute == null) return null;
+
+    if (amPm.toUpperCase() == 'PM' && hour != 12) {
+      hour += 12;
+    } else if (amPm.toUpperCase() == 'AM' && hour == 12) {
+      hour = 0;
+    }
+
+    return DateTime(year, month, day, hour, minute);
   }
 
   String _formatTimestamp(String timestamp) {
@@ -1498,33 +1690,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
       try {
         dateTime = DateTime.parse(timestamp);
       } catch (e) {
-        final parts = timestamp.split(' ');
-        if (parts.length >= 2) {
-          final datePart = parts[0];
-          final timePart = parts[1];
-          final amPm = parts.length > 2 ? parts[2] : '';
-          
-          final dateComponents = datePart.split('/');
-          if (dateComponents.length == 3) {
-            final month = int.parse(dateComponents[0]);
-            final day = int.parse(dateComponents[1]);
-            final year = int.parse(dateComponents[2]);
-            
-            final timeComponents = timePart.split(':');
-            if (timeComponents.length >= 2) {
-              var hour = int.parse(timeComponents[0]);
-              final minute = int.parse(timeComponents[1]);
-              
-              if (amPm.toUpperCase() == 'PM' && hour != 12) {
-                hour += 12;
-              } else if (amPm.toUpperCase() == 'AM' && hour == 12) {
-                hour = 0;
-              }
-              
-              dateTime = DateTime(year, month, day, hour, minute);
-            }
-          }
-        }
+        dateTime = _parseFallback(timestamp);
       }
       
       if (dateTime != null) {
@@ -1554,6 +1720,9 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
 class GlucoseChartPainter extends CustomPainter {
   final List<double> points;
   final List<dynamic> data;
+  final List<DateTime> timestamps;
+  final DateTime minTime;
+  final DateTime maxTime;
   final double minValue;
   final double maxValue;
   final double targetLow;
@@ -1566,6 +1735,9 @@ class GlucoseChartPainter extends CustomPainter {
   GlucoseChartPainter({
     required this.points,
     required this.data,
+    required this.timestamps,
+    required this.minTime,
+    required this.maxTime,
     required this.minValue,
     required this.maxValue,
     required this.targetLow,
@@ -1632,11 +1804,12 @@ class GlucoseChartPainter extends CustomPainter {
 
     if (points.isEmpty) return;
 
-    final stepX = size.width / (points.length - 1);
+    final totalMs = math.max(1, maxTime.difference(minTime).inMilliseconds);
     final positions = <Offset>[];
 
     for (int i = 0; i < points.length; i++) {
-      final x = i * stepX;
+      final timeOffset = timestamps[i].difference(minTime).inMilliseconds;
+      final x = (timeOffset / totalMs) * size.width;
       final y = size.height - ((points[i] - minValue) / (maxValue - minValue)) * size.height;
       positions.add(Offset(x, y));
     }
