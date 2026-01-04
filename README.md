@@ -7,7 +7,7 @@
 Windows system tray app to check glucose with LibreLinkUp API.
 
 > [!WARNING]
-> The program has not yet been published.
+> The program has not yet been published, but you can download MSIX package from [GitHub Releases](https://github.com/liubquanti/Libre-Link-Up-Tray/releases).
 >
 > [![Static Badge](https://img.shields.io/badge/Microsoft%20Store-Q?style=for-the-badge&logo=gitforwindows&logoColor=white&color=DFB317&link=https://apps.microsoft.com/detail/9N7DPSS8QMVF)](https://apps.microsoft.com/detail/9N7DPSS8QMVF)
 
