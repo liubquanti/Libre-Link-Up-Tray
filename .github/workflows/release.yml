@@ -70,8 +70,7 @@ jobs:
       - name: Build MSIX package
         run: |
           flutter pub run msix:create `
-            --certificate-path msix_cert.pfx `
-            --certificate-password "${{ secrets.MSIX_CERT_PASSWORD }}"
+            --install-certificate false
 
       - name: Extract tag version
         id: extract_tag
