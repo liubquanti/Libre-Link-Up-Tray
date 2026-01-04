@@ -72,6 +72,12 @@ jobs:
           flutter pub run msix:create `
             --install-certificate false
 
+      - name: Rename MSIX to release.msix
+        shell: pwsh
+        run: |
+          $msix = Get-ChildItem build/windows/x64/runner/Release/*.msix | Select-Object -First 1
+          Rename-Item $msix.FullName "release.msix"
+
       - name: Extract tag version
         id: extract_tag
         shell: bash
@@ -85,7 +91,8 @@ jobs:
           tag_name: v${{ steps.extract_tag.outputs.tag_version }}
           name: "v${{ steps.extract_tag.outputs.tag_version }}"
           body: "Release of version v${{ steps.extract_tag.outputs.tag_version }} for ${{ github.repository }}."
-          files: build/windows/runner/Release/*.msix
+          files: build/windows/x64/runner/Release/*.msix
           overwrite_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
