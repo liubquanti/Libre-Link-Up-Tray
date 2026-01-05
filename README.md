@@ -25,6 +25,10 @@ Windows system tray app to check glucose with LibreLinkUp API.
 
 > After launching the application, you need to log in to your LibreLinkUp account, after which the application will be hidden and available in the system tray. To open the application for detailed information, just click on the tray icon.
 
+## 👋 • Visitors Stats
+
+![moe-counter](https://count.getloli.com/get/@LibreLinkUpTray)
+
 ## 📊 • Development Stats
 
 ![Alt](https://repobeats.axiom.co/api/embed/32ad07bd1bf7e3a094e57900f8d8d65bc73559cb.svg "Repobeats analytics image")
