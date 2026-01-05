@@ -1442,8 +1442,30 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
     }
 
     final points = _chartPoints.map((p) => p.value).toList();
-    final minValue = math.min(points.reduce(math.min) - 20, widget.targetLow - 20);
-    final maxValue = math.max(points.reduce(math.max) + 20, widget.targetHigh + 20);
+    final minCandidate = [
+      points.reduce(math.min),
+      widget.targetLow,
+      widget.limitLow,
+    ].reduce(math.min);
+
+    final maxCandidate = [
+      points.reduce(math.max),
+      widget.targetHigh,
+      widget.limitHigh,
+    ].reduce(math.max);
+
+    // Add margin so lines and points stay inside the viewport.
+    double minValue = minCandidate - 20;
+    double maxValue = maxCandidate + 20;
+
+    if (maxValue - minValue < 10) {
+      // Avoid zero height chart if limits are very close.
+      minValue -= 5;
+      maxValue += 5;
+    }
+
+    // Prevent negative scale from pushing chart off when values are low.
+    if (minValue < 0) minValue = 0;
 
     _minTime = _chartPoints.first.timestamp;
     _maxTime = DateTime.now();
