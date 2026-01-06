@@ -147,6 +147,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool _wasOutOfRange = false;
   int? _lastGlucoseValue;
   bool _notificationsEnabled = true;
+  bool _isExiting = false;
   
   @override
   void initState() {
@@ -640,6 +641,8 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   void onWindowClose() async {
+    if (_isExiting) return;
+
     windowManager.hide();
   }
 
@@ -695,13 +698,22 @@ class _MyHomePageState extends State<MyHomePage>
     windowManager.focus();
   }
 
-  void _exitApp() {
+  Future<void> _exitApp() async {
+    if (_isExiting) return;
+    _isExiting = true;
+
     _updateTimer?.cancel();
     _themeCheckTimer?.cancel();
     _alertTimer?.cancel();
     _relativeTimeTimer?.cancel();
-    trayManager.destroy();
-    windowManager.destroy();
+    windowManager.removeListener(this);
+    trayManager.removeListener(this);
+
+    await trayManager.destroy();
+    await windowManager.setPreventClose(false);
+    await windowManager.close();
+
+    exit(0);
   }
 
   void _logout() async {
