@@ -1161,18 +1161,16 @@ class _MyHomePageState extends State<MyHomePage>
                   ],
                 ),
                 const SizedBox(height: 12),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 120),
+                Text(
+                  'Last update: ${formatApiDate(timestamp)}',
                   style: TextStyle(
                     fontSize: 12,
+                    fontWeight: FontWeight.w500,
                     color: _isNoDataStale
                         ? (_noDataBlinkVisible ? Colors.red : lastUpdateBaseColor)
                         : lastUpdateBaseColor,
                   ),
-                  child: Text(
-                    'Last update: ${formatApiDate(timestamp)}',
-                    textAlign: TextAlign.center,
-                  ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
                 Container(
