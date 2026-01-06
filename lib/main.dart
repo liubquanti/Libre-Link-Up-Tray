@@ -657,9 +657,11 @@ class _MyHomePageState extends State<MyHomePage>
         items: [
           MenuItem(label: "Show app", onClick: (menuItem) => _showWindow()),
           MenuItem(label: "Refresh data", onClick: (menuItem) => _updateGlucoseData()),
+          MenuItem.separator(),
           MenuItem(label: "Toggle theme", onClick: (menuItem) => _toggleTheme()),
           MenuItem(label: _notificationsEnabled ? "Disable notifications" : "Enable notifications", onClick: (menuItem) => _toggleNotifications()),
           MenuItem(label: _autoStartEnabled ? "Disable auto-start" : "Enable auto-start", onClick: (menuItem) => _toggleAutoStart()),
+          MenuItem.separator(),
           MenuItem(label: "Logout", onClick: (menuItem) => _logout()),
           MenuItem(label: "Exit", onClick: (menuItem) => _exitApp()),
         ],
