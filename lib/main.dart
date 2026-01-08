@@ -1479,8 +1479,10 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
     // Prevent negative scale from pushing chart off when values are low.
     if (minValue < 0) minValue = 0;
 
-    _minTime = _chartPoints.first.timestamp;
-    _maxTime = DateTime.now();
+    final now = DateTime.now();
+    final windowStart = now.subtract(const Duration(hours: 12));
+    _minTime = windowStart;
+    _maxTime = now;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1612,7 +1614,11 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
     final nearestIndex = _findNearestIndex(hoverTime);
     final point = _chartPoints[nearestIndex];
 
-    final pointX = (point.timestamp.difference(_minTime!).inMilliseconds / totalMs) * size.width;
+    DateTime clampedTs = point.timestamp;
+    if (clampedTs.isBefore(_minTime!)) clampedTs = _minTime!;
+    if (clampedTs.isAfter(_maxTime!)) clampedTs = _maxTime!;
+
+    final pointX = (clampedTs.difference(_minTime!).inMilliseconds / totalMs) * size.width;
     final pointY = size.height - ((point.value - minValue) / (maxValue - minValue)) * size.height;
 
     setState(() {
@@ -1842,7 +1848,11 @@ class GlucoseChartPainter extends CustomPainter {
     final positions = <Offset>[];
 
     for (int i = 0; i < points.length; i++) {
-      final timeOffset = timestamps[i].difference(minTime).inMilliseconds;
+      var ts = timestamps[i];
+      if (ts.isBefore(minTime)) ts = minTime;
+      if (ts.isAfter(maxTime)) ts = maxTime;
+
+      final timeOffset = ts.difference(minTime).inMilliseconds;
       final x = (timeOffset / totalMs) * size.width;
       final y = size.height - ((points[i] - minValue) / (maxValue - minValue)) * size.height;
       positions.add(Offset(x, y));
