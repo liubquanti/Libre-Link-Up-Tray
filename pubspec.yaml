@@ -56,6 +56,6 @@ msix_config:
   publisher_display_name: liubquanti
   publisher: CN=F23B2EF8-5D90-4AF5-910B-1D05FBF4134B
   identity_name: liubquanti.LibreLinkUpTray
-  msix_version: 0.0.2.0
+  msix_version: 0.0.2.1
   logo_path: assets/icon/icon.png
   capabilities: internetClient
