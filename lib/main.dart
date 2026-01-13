@@ -1862,7 +1862,16 @@ class GlucoseChartPainter extends CustomPainter {
     if (positions.isNotEmpty) {
       path.moveTo(positions.first.dx, positions.first.dy);
       for (int i = 1; i < positions.length; i++) {
-        path.lineTo(positions[i].dx, positions[i].dy);
+        final prevTs = timestamps[i - 1];
+        final currTs = timestamps[i];
+        final gapMs = currTs.difference(prevTs).inMilliseconds.abs();
+        const maxGapMs = 29.9 * 60 * 1000;
+
+        if (gapMs > maxGapMs) {
+          path.moveTo(positions[i].dx, positions[i].dy);
+        } else {
+          path.lineTo(positions[i].dx, positions[i].dy);
+        }
       }
     }
 
