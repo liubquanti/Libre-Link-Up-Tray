@@ -38,8 +38,6 @@ flutter:
     - assets/tray/
     - assets/tray/white/
     - assets/tray/black/
-    - assets/tray/alert.ico
-    - assets/tray/load.ico
     - assets/icon/icon.png
     - assets/data/testdata.json
     - assets/photos/libreview.png

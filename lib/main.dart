@@ -572,7 +572,7 @@ class _MyHomePageState extends State<MyHomePage>
       });
       
       if (_showAlert) {
-        await trayManager.setIcon('assets/tray/alert.ico');
+        await trayManager.setIcon(_themedTrayIcon('alert-triangle.ico'));
       } else {
         await _setNormalGlucoseIcon();
       }
@@ -597,6 +597,11 @@ class _MyHomePageState extends State<MyHomePage>
         await trayManager.setIcon(iconPath);
       }
     }
+  }
+
+  String _themedTrayIcon(String fileName) {
+    final themeFolder = _iconService.isDarkTheme ? 'white' : 'black';
+    return 'assets/tray/$themeFolder/$fileName';
   }
 
   Future<void> _updateTrayIcon() async {
@@ -674,7 +679,7 @@ class _MyHomePageState extends State<MyHomePage>
       await trayManager.setToolTip("LibreLinkUpTray");
       
       try {
-        await trayManager.setIcon('assets/tray/load.ico');
+        await trayManager.setIcon(_themedTrayIcon('refresh-dot.ico'));
       } catch (iconError) {
         print('Warning: Could not set initial tray icon: $iconError');
       }
@@ -734,7 +739,7 @@ class _MyHomePageState extends State<MyHomePage>
         _wasOutOfRange = false;
         _lastGlucoseValue = null;
       });
-      await trayManager.setIcon('assets/tray/load.ico');
+      await trayManager.setIcon(_themedTrayIcon('refresh-dot.ico'));
       await trayManager.setToolTip("LibreLinkUpTray");
       
       _showWindow();
