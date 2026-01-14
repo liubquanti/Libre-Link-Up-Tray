@@ -1,5 +1,6 @@
 name: librelinkuptray
 description: LibreLinkUpTray application for monitoring glucose levels
+version: 0.0.3+7
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -54,6 +55,6 @@ msix_config:
   publisher_display_name: liubquanti
   publisher: CN=F23B2EF8-5D90-4AF5-910B-1D05FBF4134B
   identity_name: liubquanti.LibreLinkUpTray
-  msix_version: 0.0.2.2
+  msix_version: 0.0.3.0
   logo_path: assets/icon/icon.png
   capabilities: internetClient
