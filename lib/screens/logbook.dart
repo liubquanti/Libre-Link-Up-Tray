@@ -178,7 +178,9 @@ class _LogbookScreenState extends State<LogbookScreen> {
                                     : Matrix4.identity(),
                                     child: Icon(
                                       trendDisplayArrow,
-                                      color: Colors.white,
+                                      color: FluentTheme.of(context).brightness == Brightness.dark
+                                        ? const Color(0xFFffffff)
+                                        : const Color(0xFF1b1b1b),
                                       size: 28,
                                     ),
                                     ),
