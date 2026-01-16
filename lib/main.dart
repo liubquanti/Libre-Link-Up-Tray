@@ -411,17 +411,34 @@ class _MyHomePageState extends State<MyHomePage>
 
   void _startRelativeTimeTicker() {
     _relativeTimeTimer?.cancel();
-    _relativeTimeTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _relativeTimeTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (!mounted || !_isLoggedIn) return;
+
+      final wasStale = _isNoDataStale;
       final isStale = _isLastUpdateOverdue();
+      final newBlinkVisible = isStale ? !_noDataBlinkVisible : true;
+
       setState(() {
         _isNoDataStale = isStale;
-        if (isStale) {
-          _noDataBlinkVisible = !_noDataBlinkVisible;
-        } else {
-          _noDataBlinkVisible = true;
-        }
+        _noDataBlinkVisible = newBlinkVisible;
       });
+
+      // If glucose alert blinking is active, let it take priority.
+      if (_isBlinking) return;
+
+      try {
+        if (isStale) {
+          if (newBlinkVisible) {
+            await trayManager.setIcon(_themedTrayIcon('time-duration-off.ico'));
+          } else {
+            await _setNormalGlucoseIcon();
+          }
+        } else if (wasStale) {
+          await _updateTrayIcon();
+        }
+      } catch (e) {
+        print('Relative time tray icon toggle error: $e');
+      }
     });
   }
 
