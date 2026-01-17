@@ -33,20 +33,31 @@ void main() async {
   );
   
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
-  
-  launchAtStartup.setup(
-    appName: packageInfo.appName,
-    appPath: Platform.resolvedExecutable,
-    packageName: 'liubquanti.LibreLinkUpTray',
-  );
   final prefs = await SharedPreferences.getInstance();
-  final storedAutoStart = prefs.getBool('auto_start_enabled') ?? true;
-  
-  bool isEnabled = await launchAtStartup.isEnabled();
-  if (storedAutoStart && !isEnabled) {
-    await launchAtStartup.enable();
-  } else if (!storedAutoStart && isEnabled) {
-    await launchAtStartup.disable();
+
+  final userDefinedAutoStart = prefs.getBool('auto_start_user_defined') ?? false;
+  final storedAutoStart = prefs.getBool('auto_start_enabled');
+  bool desiredAutoStart = storedAutoStart ?? true;
+
+  if (!kDebugMode) {
+    launchAtStartup.setup(
+      appName: packageInfo.appName,
+      appPath: Platform.resolvedExecutable,
+      packageName: 'liubquanti.LibreLinkUpTray',
+    );
+    final isEnabled = await launchAtStartup.isEnabled();
+
+    if (!userDefinedAutoStart && storedAutoStart == false && isEnabled) {
+      desiredAutoStart = true;
+      await prefs.setBool('auto_start_enabled', true);
+    }
+    if (desiredAutoStart && !isEnabled) {
+      await launchAtStartup.enable();
+    } else if (!desiredAutoStart && isEnabled) {
+      await launchAtStartup.disable();
+    }
+  } else {
+    print('Debug mode: skipping auto-start configuration');
   }
   
   await windowManager.ensureInitialized();
@@ -230,20 +241,40 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> _loadAutoStartPreference() async {
     final prefs = await SharedPreferences.getInstance();
+    final userDefined = prefs.getBool('auto_start_user_defined') ?? false;
     final storedAutoStart = prefs.getBool('auto_start_enabled');
-    if (storedAutoStart != null) {
-      setState(() {
-        _autoStartEnabled = storedAutoStart;
-      });
+
+    bool desiredAutoStart = storedAutoStart ?? true;
+    if (!userDefined && storedAutoStart == false && !kDebugMode) {
+      // Only recover when the OS still has auto-start enabled (likely written by a debug run).
+      try {
+        final isEnabled = await launchAtStartup.isEnabled();
+        if (isEnabled) {
+          desiredAutoStart = true;
+          await prefs.setBool('auto_start_enabled', true);
+        }
+      } catch (e) {
+        print('Auto-start preference recovery skipped: $e');
+      }
+    }
+
+    setState(() {
+      _autoStartEnabled = desiredAutoStart;
+    });
+  }
+
+  Future<void> _saveAutoStartPreference({bool userDefined = false}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('auto_start_enabled', _autoStartEnabled);
+    if (userDefined) {
+      await prefs.setBool('auto_start_user_defined', true);
     }
   }
 
-  Future<void> _saveAutoStartPreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('auto_start_enabled', _autoStartEnabled);
-  }
-
   Future<void> _checkAutoStartStatus() async {
+    if (kDebugMode) {
+      return;
+    }
     try {
       final isEnabled = await launchAtStartup.isEnabled();
       setState(() {
@@ -256,6 +287,9 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> _toggleAutoStart() async {
+    if (kDebugMode) {
+      return;
+    }
     try {
       if (_autoStartEnabled) {
         await launchAtStartup.disable();
@@ -263,7 +297,7 @@ class _MyHomePageState extends State<MyHomePage>
         await launchAtStartup.enable();
       }
       await _checkAutoStartStatus();
-      await _saveAutoStartPreference();
+      await _saveAutoStartPreference(userDefined: true);
       
       await _updateTrayContextMenu();
     } catch (e) {
