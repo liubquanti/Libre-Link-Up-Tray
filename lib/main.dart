@@ -157,6 +157,7 @@ class _MyHomePageState extends State<MyHomePage>
   
   bool _wasOutOfRange = false;
   int? _lastGlucoseValue;
+  bool _pendingRecoveryNotification = false;
   bool _notificationsEnabled = true;
   bool _isExiting = false;
   
@@ -528,24 +529,38 @@ class _MyHomePageState extends State<MyHomePage>
     final highLimit = alarmLimits['high']!;
     final firstName = connection['firstName'] ?? 'User';
 
+    final targetLow = connection['targetLow']?.toDouble() ?? 70.0;
+    final targetHigh = connection['targetHigh']?.toDouble() ?? 180.0;
+
     final isCurrentlyOutOfRange = value < lowLimit || value > highLimit;
+    final safeLowerBound = lowLimit > targetLow ? lowLimit : targetLow;
+    final safeUpperBound = highLimit < targetHigh ? highLimit : targetHigh;
+    final hasValidSafeZone = safeLowerBound <= safeUpperBound;
+    final isInSafeZone = hasValidSafeZone
+        ? value >= safeLowerBound && value <= safeUpperBound
+        : value >= targetLow && value <= targetHigh;
 
     if (_lastGlucoseValue == null) {
       _lastGlucoseValue = value;
       _wasOutOfRange = isCurrentlyOutOfRange;
+      _pendingRecoveryNotification = isCurrentlyOutOfRange;
       return;
     }
 
-    if (_wasOutOfRange != isCurrentlyOutOfRange) {
-      if (isCurrentlyOutOfRange) {
+    if (isCurrentlyOutOfRange) {
+      if (!_wasOutOfRange) {
         await _showGlucoseAlert(value, lowLimit, highLimit, firstName, true);
-      } else {
-        await _showGlucoseAlert(value, lowLimit, highLimit, firstName, false);
+      } else if (_lastGlucoseValue != value) {
+        final difference = (value - _lastGlucoseValue!).abs();
+        if (difference >= 20) {
+          await _showGlucoseAlert(value, lowLimit, highLimit, firstName, true);
+        }
       }
-    } else if (isCurrentlyOutOfRange && _lastGlucoseValue != value) {
-      final difference = (value - _lastGlucoseValue!).abs();
-      if (difference >= 20) {
-        await _showGlucoseAlert(value, lowLimit, highLimit, firstName, true);
+      _pendingRecoveryNotification = true;
+    } else {
+      if (isInSafeZone && _pendingRecoveryNotification) {
+        await _showGlucoseAlert(value, lowLimit, highLimit, firstName, false);
+        _pendingRecoveryNotification = false;
       }
     }
 
@@ -789,6 +804,7 @@ class _MyHomePageState extends State<MyHomePage>
         _showLogbook = false;
         _wasOutOfRange = false;
         _lastGlucoseValue = null;
+        _pendingRecoveryNotification = false;
       });
       await trayManager.setIcon(_themedTrayIcon('refresh-dot.ico'));
       await trayManager.setToolTip("LibreLinkUpTray");
@@ -1270,6 +1286,7 @@ class _MyHomePageState extends State<MyHomePage>
                     targetHigh: connection['targetHigh']?.toDouble() ?? 180.0,
                     limitLow: lowLimit,      // додати
                     limitHigh: highLimit,    // додати
+                    currentValueColor: glucoseColor,
                   ),
                 ),
               ],
@@ -1469,6 +1486,7 @@ class InteractiveGlucoseChart extends StatefulWidget {
   final double targetHigh;
   final double limitLow;   // додати
   final double limitHigh;  // додати
+  final Color currentValueColor;
 
   const InteractiveGlucoseChart({
     super.key,
@@ -1477,6 +1495,7 @@ class InteractiveGlucoseChart extends StatefulWidget {
     required this.targetHigh,
     required this.limitLow,
     required this.limitHigh,
+    required this.currentValueColor,
   });
 
   @override
@@ -1573,6 +1592,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                   limitHigh: widget.limitHigh,   // додати
                   isDark: FluentTheme.of(context).brightness == Brightness.dark,
                   hoveredPoint: _hoveredPoint,
+                  currentValueColor: widget.currentValueColor,
                 ),
               ),
             ),
@@ -1823,10 +1843,11 @@ class GlucoseChartPainter extends CustomPainter {
   final double maxValue;
   final double targetLow;
   final double targetHigh;
-  final double limitLow;   // додати
-  final double limitHigh;  // додати
+  final double limitLow;
+  final double limitHigh;
   final bool isDark;
   final Offset? hoveredPoint;
+  final Color currentValueColor;
 
   GlucoseChartPainter({
     required this.points,
@@ -1842,6 +1863,7 @@ class GlucoseChartPainter extends CustomPainter {
     required this.limitHigh,
     required this.isDark,
     this.hoveredPoint,
+    required this.currentValueColor,
   });
 
   @override
@@ -1939,8 +1961,10 @@ class GlucoseChartPainter extends CustomPainter {
       final isCurrent = data.length > i && data[i]['isCurrent'] == true;
       
       Color pointColor;
-      
-      if (value < targetLow) {
+
+      if (isCurrent) {
+        pointColor = currentValueColor;
+      } else if (value < targetLow) {
         pointColor = Colors.red.darker;
       } else if (value > targetHigh) {
         pointColor = Colors.red.darker;
