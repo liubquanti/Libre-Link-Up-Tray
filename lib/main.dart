@@ -2065,12 +2065,21 @@ class GlucoseChartPainter extends CustomPainter {
     }
 
     final path = Path();
-    if (positions.isNotEmpty) {
-      path.moveTo(positions.first.dx, positions.first.dy);
-      for (int i = 1; i < positions.length; i++) {
-        final prevTs = timestamps[i - 1];
-        final currTs = timestamps[i];
-        final gapMs = currTs.difference(prevTs).inMilliseconds.abs();
+    int lastValidIndex = -1;
+
+    for (int i = 0; i < positions.length; i++) {
+      final ts = timestamps[i];
+      
+      if (ts.isBefore(minTime) || ts.isAfter(maxTime)) {
+        lastValidIndex = -1;
+        continue;
+      }
+      
+      if (lastValidIndex == -1) {
+        path.moveTo(positions[i].dx, positions[i].dy);
+      } else {
+        final prevTs = timestamps[lastValidIndex];
+        final gapMs = ts.difference(prevTs).inMilliseconds.abs();
         const maxGapMs = 29.9 * 60 * 1000;
 
         if (gapMs > maxGapMs) {
@@ -2079,12 +2088,20 @@ class GlucoseChartPainter extends CustomPainter {
           path.lineTo(positions[i].dx, positions[i].dy);
         }
       }
+      
+      lastValidIndex = i;
     }
 
     paint.color = isDark ? const Color(0xFFFBFBFB) : const Color(0xFF2B2B2B);
     canvas.drawPath(path, paint);
 
     for (int i = 0; i < positions.length; i++) {
+      final timestamp = timestamps[i];
+      
+      if (timestamp.isBefore(minTime) || timestamp.isAfter(maxTime)) {
+        continue;
+      }
+      
       final value = points[i];
       final isCurrent = data.length > i && data[i]['isCurrent'] == true;
       
