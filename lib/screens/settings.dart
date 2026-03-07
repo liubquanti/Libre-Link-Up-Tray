@@ -9,9 +9,11 @@ class SettingsScreen extends StatelessWidget {
   final bool autoStartEnabled;
   final String trayIconColorMode;
   final bool notificationsEnabled;
+  final bool showChartPoints;
   final VoidCallback onToggleAutoStart;
   final ValueChanged<String?> onTrayIconColorModeChanged;
   final VoidCallback onToggleNotifications;
+  final VoidCallback onToggleChartPoints;
   final VoidCallback onRefresh;
   final VoidCallback onLogout;
   final VoidCallback onShowAbout;
@@ -21,9 +23,11 @@ class SettingsScreen extends StatelessWidget {
     required this.autoStartEnabled,
     required this.trayIconColorMode,
     required this.notificationsEnabled,
+    required this.showChartPoints,
     required this.onToggleAutoStart,
     required this.onTrayIconColorModeChanged,
     required this.onToggleNotifications,
+    required this.onToggleChartPoints,
     required this.onRefresh,
     required this.onLogout,
     required this.onShowAbout,
@@ -225,6 +229,58 @@ class SettingsScreen extends StatelessWidget {
                         .toList(),
                     onChanged: onTrayIconColorModeChanged,
                   ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 5),
+          
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2B2B2B)
+                : const Color(0xFFFBFBFB),
+              border: Border.all(
+              color: FluentTheme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1d1d1d)
+                : const Color(0xFFe5e5e5),
+              width: 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  FluentSystemIcons.ic_fluent_data_histogram_regular,
+                  size: 20,
+                  color: FluentTheme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFffffff)
+                    : const Color(0xFF1b1b1b),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Chart points',
+                        style: theme.typography.body?.copyWith(
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      Text(
+                        'Show points on glucose graph',
+                        style: theme.typography.caption,
+                      ),
+                    ],
+                  ),
+                ),
+                ToggleSwitch(
+                  checked: showChartPoints,
+                  onChanged: (value) => onToggleChartPoints(),
                 ),
               ],
             ),

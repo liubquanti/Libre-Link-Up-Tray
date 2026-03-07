@@ -207,6 +207,7 @@ class _MyHomePageState extends State<MyHomePage>
   int? _lastGlucoseValue;
   bool _pendingRecoveryNotification = false;
   bool _notificationsEnabled = true;
+  bool _showChartPoints = true;
   bool _isExiting = false;
   
   @override
@@ -220,6 +221,7 @@ class _MyHomePageState extends State<MyHomePage>
     try {
       await _loadThemePreference();
       await _loadNotificationPreference();
+      await _loadChartPointsPreference();
       await _loadAutoStartPreference();
       await _initTray();
       windowManager.addListener(this);
@@ -363,6 +365,26 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> _saveNotificationPreference() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notifications_enabled', _notificationsEnabled);
+  }
+
+  Future<void> _loadChartPointsPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedChartPoints = prefs.getBool('show_chart_points');
+    setState(() {
+      _showChartPoints = storedChartPoints ?? _showChartPoints;
+    });
+  }
+
+  Future<void> _saveChartPointsPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('show_chart_points', _showChartPoints);
+  }
+
+  void _toggleChartPoints() {
+    setState(() {
+      _showChartPoints = !_showChartPoints;
+    });
+    _saveChartPointsPreference();
   }
 
   Future<void> _loadAutoStartPreference() async {
@@ -1136,12 +1158,14 @@ class _MyHomePageState extends State<MyHomePage>
                               autoStartEnabled: _autoStartEnabled,
                               trayIconColorMode: _trayIconColorMode,
                               notificationsEnabled: _notificationsEnabled,
+                              showChartPoints: _showChartPoints,
                               onToggleAutoStart: _toggleAutoStart,
                               onTrayIconColorModeChanged: (mode) async {
                                 if (mode == null) return;
                                 await _setTrayIconColorMode(mode);
                               },
                               onToggleNotifications: _toggleNotifications,
+                              onToggleChartPoints: _toggleChartPoints,
                               onRefresh: _updateGlucoseData,
                               onLogout: _logout,
                               onShowAbout: () {
@@ -1415,6 +1439,7 @@ class _MyHomePageState extends State<MyHomePage>
                     limitLow: lowLimit,      // додати
                     limitHigh: highLimit,    // додати
                     currentValueColor: glucoseColor,
+                    showChartPoints: _showChartPoints,
                   ),
                 ),
               ],
@@ -1615,6 +1640,7 @@ class InteractiveGlucoseChart extends StatefulWidget {
   final double limitLow;   // додати
   final double limitHigh;  // додати
   final Color currentValueColor;
+  final bool showChartPoints;
 
   const InteractiveGlucoseChart({
     super.key,
@@ -1624,6 +1650,7 @@ class InteractiveGlucoseChart extends StatefulWidget {
     required this.limitLow,
     required this.limitHigh,
     required this.currentValueColor,
+    required this.showChartPoints,
   });
 
   @override
@@ -1721,6 +1748,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                   isDark: FluentTheme.of(context).brightness == Brightness.dark,
                   hoveredPoint: _hoveredPoint,
                   currentValueColor: widget.currentValueColor,
+                  showChartPoints: widget.showChartPoints,
                 ),
               ),
             ),
@@ -1976,6 +2004,7 @@ class GlucoseChartPainter extends CustomPainter {
   final bool isDark;
   final Offset? hoveredPoint;
   final Color currentValueColor;
+  final bool showChartPoints;
 
   GlucoseChartPainter({
     required this.points,
@@ -1992,6 +2021,7 @@ class GlucoseChartPainter extends CustomPainter {
     required this.isDark,
     this.hoveredPoint,
     required this.currentValueColor,
+    required this.showChartPoints,
   });
 
   @override
@@ -2095,15 +2125,27 @@ class GlucoseChartPainter extends CustomPainter {
     paint.color = isDark ? const Color(0xFFFBFBFB) : const Color(0xFF2B2B2B);
     canvas.drawPath(path, paint);
 
+    // Render chart points (all or just the last one depending on showChartPoints)
+    final validPointIndices = <int>[];
     for (int i = 0; i < positions.length; i++) {
       final timestamp = timestamps[i];
-      
       if (timestamp.isBefore(minTime) || timestamp.isAfter(maxTime)) {
+        continue;
+      }
+      validPointIndices.add(i);
+    }
+
+    for (int idx = 0; idx < validPointIndices.length; idx++) {
+      final i = validPointIndices[idx];
+      final isCurrent = data.length > i && data[i]['isCurrent'] == true;
+      final isLastPoint = idx == validPointIndices.length - 1;
+      
+      // Skip rendering if points are hidden and this is not the last point
+      if (!showChartPoints && !isLastPoint && !isCurrent) {
         continue;
       }
       
       final value = points[i];
-      final isCurrent = data.length > i && data[i]['isCurrent'] == true;
       
       Color pointColor;
 
