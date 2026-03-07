@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 
 class LibreLinkService {
   static const String baseUrl = 'https://api-eu.libreview.io';
+  static const String _defaultApiVersion = '4.16.0';
   
   static final LibreLinkService _instance = LibreLinkService._internal();
   factory LibreLinkService() => _instance;
@@ -14,6 +15,7 @@ class LibreLinkService {
   String? _authToken;
   String? _patientId;
   String? _userId;
+  String _apiVersion = _defaultApiVersion;
 
   bool testMode = false;
 
@@ -23,7 +25,7 @@ class LibreLinkService {
     'connection': 'Keep-Alive',
     'content-type': 'application/json',
     'product': 'llu.android',
-    'version': '4.16.0',
+    'version': _apiVersion,
   };
 
   Map<String, String> get _authHeaders => {
@@ -38,6 +40,96 @@ class LibreLinkService {
     return digest.toString();
   }
 
+  bool _isOutdatedVersionResponse(http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) return false;
+      return decoded['status'] == 920;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String? _extractMinimumVersion(http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) return null;
+      final data = decoded['data'];
+      if (data is! Map<String, dynamic>) return null;
+      final minimumVersion = data['minimumVersion'];
+      if (minimumVersion is String && minimumVersion.trim().isNotEmpty) {
+        return minimumVersion.trim();
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _isLowerVersion(String current, String required) {
+    List<int> parseVersion(String value) {
+      final numeric = RegExp(r'^\d+(\.\d+)*').firstMatch(value.trim())?.group(0) ?? value.trim();
+      return numeric
+          .split('.')
+          .map((part) => int.tryParse(part) ?? 0)
+          .toList(growable: false);
+    }
+
+    final currentParts = parseVersion(current);
+    final requiredParts = parseVersion(required);
+    final maxLen = currentParts.length > requiredParts.length ? currentParts.length : requiredParts.length;
+
+    for (int i = 0; i < maxLen; i++) {
+      final currentValue = i < currentParts.length ? currentParts[i] : 0;
+      final requiredValue = i < requiredParts.length ? requiredParts[i] : 0;
+      if (currentValue < requiredValue) return true;
+      if (currentValue > requiredValue) return false;
+    }
+    return false;
+  }
+
+  Future<http.Response> _getWithVersionGuard(Uri uri, Map<String, String> headers) async {
+    var response = await http.get(uri, headers: headers);
+
+    if (_isOutdatedVersionResponse(response)) {
+      final minimumVersion = _extractMinimumVersion(response);
+      if (minimumVersion != null && _isLowerVersion(_apiVersion, minimumVersion)) {
+        print('API version is outdated ($_apiVersion). Updating to minimumVersion: $minimumVersion');
+        _apiVersion = minimumVersion;
+        response = await http.get(uri, headers: headers);
+      }
+    }
+
+    return response;
+  }
+
+  Future<http.Response> _postWithVersionGuard(
+    Uri uri,
+    Map<String, String> headers,
+    String body,
+  ) async {
+    var response = await http.post(
+      uri,
+      headers: headers,
+      body: body,
+    );
+
+    if (_isOutdatedVersionResponse(response)) {
+      final minimumVersion = _extractMinimumVersion(response);
+      if (minimumVersion != null && _isLowerVersion(_apiVersion, minimumVersion)) {
+        print('API version is outdated ($_apiVersion). Updating to minimumVersion: $minimumVersion');
+        _apiVersion = minimumVersion;
+        response = await http.post(
+          uri,
+          headers: headers,
+          body: body,
+        );
+      }
+    }
+
+    return response;
+  }
+
   Future<bool> login(String email, String password) async {
     if (email.trim().toLowerCase() == 'test@liubquanti.click' && password == '1234567890') {
       testMode = true;
@@ -48,10 +140,10 @@ class LibreLinkService {
     }
 
     try {
-      final response = await http.post(
+      final response = await _postWithVersionGuard(
         Uri.parse('$baseUrl/llu/auth/login'),
-        headers: _baseHeaders,
-        body: jsonEncode({
+        _baseHeaders,
+        jsonEncode({
           'email': email,
           'password': password,
         }),
@@ -136,9 +228,9 @@ class LibreLinkService {
     try {
       print('Making connections request with headers: ${_authHeaders}');
       
-      final response = await http.get(
+      final response = await _getWithVersionGuard(
         Uri.parse('$baseUrl/llu/connections'),
-        headers: _authHeaders,
+        _authHeaders,
       );
 
       print('Connections response status: ${response.statusCode}');
@@ -195,9 +287,9 @@ class LibreLinkService {
     try {
       print('Making glucose data request with headers: ${_authHeaders}');
       
-      final response = await http.get(
+      final response = await _getWithVersionGuard(
         Uri.parse('$baseUrl/llu/connections/$_patientId/graph'),
-        headers: _authHeaders,
+        _authHeaders,
       );
 
       print('Glucose data response status: ${response.statusCode}');
@@ -225,9 +317,9 @@ class LibreLinkService {
     }
     if (_authToken == null || _patientId == null) return null;
     try {
-      final response = await http.get(
+      final response = await _getWithVersionGuard(
         Uri.parse('$baseUrl/llu/connections/$_patientId/logbook'),
-        headers: _authHeaders,
+        _authHeaders,
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
