@@ -1860,7 +1860,6 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
 
-    // Calculate padding (same as in paint method)
     final leftPadding = widget.showChartGridValues ? 20.0 : 0.0;
     final bottomPadding = widget.showChartGridValues ? 16.0 : 0.0;
     final topPadding = 0.0;
@@ -1869,7 +1868,6 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
     final chartWidth = size.width - leftPadding - rightPadding;
     final chartHeight = size.height - topPadding - bottomPadding;
 
-    // Check if position is within chart area
     if (position.dx < leftPadding || position.dx > leftPadding + chartWidth) return;
 
     final totalMs = math.max(1, _maxTime!.difference(_minTime!).inMilliseconds);
@@ -2061,7 +2059,6 @@ class GlucoseChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Calculate padding for labels
     final double leftPadding = showChartGridValues ? 20.0 : 0.0;
     final double bottomPadding = showChartGridValues ? 16.0 : 0.0;
     const double topPadding = 0.0;
@@ -2070,7 +2067,6 @@ class GlucoseChartPainter extends CustomPainter {
     final chartWidth = size.width - leftPadding - rightPadding;
     final chartHeight = size.height - topPadding - bottomPadding;
 
-    // Draw grid and labels first (behind everything else)
     final gridPaint = Paint()
       ..color = (isDark ? Colors.white : Colors.grey).withOpacity(0.2)
       ..style = PaintingStyle.stroke
@@ -2115,7 +2111,6 @@ class GlucoseChartPainter extends CustomPainter {
       hourTicks = const <DateTime>[];
     }
 
-    // Draw labels behind grid
     if (showChartGridValues) {
 
       for (final valueAtLine in yValueTicks) {
@@ -2158,7 +2153,6 @@ class GlucoseChartPainter extends CustomPainter {
       }
     }
 
-    // Draw grid lines
     if (showChartGridValues && yValueTicks.isNotEmpty) {
       canvas.drawLine(Offset(leftPadding, topPadding), Offset(leftPadding + chartWidth, topPadding), gridPaint);
       canvas.drawLine(Offset(leftPadding, topPadding + chartHeight), Offset(leftPadding + chartWidth, topPadding + chartHeight), gridPaint);
@@ -2194,7 +2188,6 @@ class GlucoseChartPainter extends CustomPainter {
       }
     }
 
-    // Now draw chart elements on top
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
