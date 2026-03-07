@@ -179,17 +179,20 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage>
-    with WindowListener, TrayListener {
+  with WindowListener, TrayListener, WidgetsBindingObserver {
   final LibreLinkService _service = LibreLinkService();
   final SimpleIconService _iconService = SimpleIconService();
+  static const String _trayIconColorModeSystem = 'system';
+  static const String _trayIconColorModeBlack = 'black';
+  static const String _trayIconColorModeWhite = 'white';
+
   bool _isLoggedIn = false;
   Timer? _updateTimer;
-  Timer? _themeCheckTimer;
   Timer? _alertTimer;
   Timer? _relativeTimeTimer;
   Map<String, dynamic>? _glucoseData;
   bool _isInitialized = false;
-  bool _followSystemTheme = true;
+  String _trayIconColorMode = _trayIconColorModeSystem;
   bool _isBlinking = false;
   bool _showAlert = false;
   bool _autoStartEnabled = false;
@@ -209,6 +212,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeApp();
   }
 
@@ -220,7 +224,7 @@ class _MyHomePageState extends State<MyHomePage>
       await _initTray();
       windowManager.addListener(this);
       await _checkLoginStatus();
-      _startThemeMonitoring();
+      _checkThemeChange();
       await _checkAutoStartStatus();
       setState(() {
         _isInitialized = true;
@@ -249,27 +253,103 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> _loadThemePreference() async {
     final prefs = await SharedPreferences.getInstance();
+    final storedMode = prefs.getString('tray_icon_color_mode');
     final storedFollowSystem = prefs.getBool('tray_icon_follow_system');
     final storedThemeIsDark = prefs.getBool('tray_icon_dark_theme');
 
-    final systemIsDark = WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+    final systemIsDark =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+
+    String resolvedMode = _trayIconColorModeSystem;
+    if (storedMode == _trayIconColorModeSystem ||
+        storedMode == _trayIconColorModeBlack ||
+        storedMode == _trayIconColorModeWhite) {
+      resolvedMode = storedMode!;
+    } else {
+      final followSystem = storedFollowSystem ?? true;
+      if (followSystem) {
+        resolvedMode = _trayIconColorModeSystem;
+      } else {
+        final forceWhite = storedThemeIsDark ?? systemIsDark;
+        resolvedMode = forceWhite ? _trayIconColorModeWhite : _trayIconColorModeBlack;
+      }
+    }
 
     setState(() {
-      _followSystemTheme = storedFollowSystem ?? true;
+      _trayIconColorMode = resolvedMode;
     });
 
-    final shouldUseDarkTheme = _followSystemTheme
-        ? systemIsDark
-        : (storedThemeIsDark ?? systemIsDark);
-
-    _iconService.setTheme(shouldUseDarkTheme);
+    _iconService.setTheme(_resolveTrayIconIsDark(resolvedMode));
     _iconService.clearCache();
   }
 
   Future<void> _saveThemePreference() async {
     final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('tray_icon_color_mode', _trayIconColorMode);
     await prefs.setBool('tray_icon_dark_theme', _iconService.isDarkTheme);
-    await prefs.setBool('tray_icon_follow_system', _followSystemTheme);
+    await prefs.setBool(
+      'tray_icon_follow_system',
+      _trayIconColorMode == _trayIconColorModeSystem,
+    );
+  }
+
+  bool _resolveTrayIconIsDark(String mode) {
+    switch (mode) {
+      case _trayIconColorModeWhite:
+        return true;
+      case _trayIconColorModeBlack:
+        return false;
+      case _trayIconColorModeSystem:
+      default:
+        if (mounted) {
+          return FluentTheme.of(context).brightness == Brightness.dark;
+        }
+        return WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark;
+    }
+  }
+
+  String _trayIconModeLabel(String mode) {
+    switch (mode) {
+      case _trayIconColorModeBlack:
+        return 'Black';
+      case _trayIconColorModeWhite:
+        return 'White';
+      case _trayIconColorModeSystem:
+      default:
+        return 'System';
+    }
+  }
+
+  Future<void> _setTrayIconColorMode(String mode) async {
+    final normalizedMode =
+        (mode == _trayIconColorModeBlack || mode == _trayIconColorModeWhite)
+            ? mode
+            : _trayIconColorModeSystem;
+
+    final nextIsDark = _resolveTrayIconIsDark(normalizedMode);
+
+    setState(() {
+      _trayIconColorMode = normalizedMode;
+    });
+
+    _iconService.setTheme(nextIsDark);
+    _iconService.clearCache();
+
+    await _saveThemePreference();
+    await _updateTrayIcon();
+    await _updateTrayContextMenu();
+  }
+
+  Future<void> _cycleTrayIconColorMode() async {
+    final modes = [
+      _trayIconColorModeSystem,
+      _trayIconColorModeBlack,
+      _trayIconColorModeWhite,
+    ];
+    final currentIndex = modes.indexOf(_trayIconColorMode);
+    final nextMode = modes[(currentIndex + 1) % modes.length];
+    await _setTrayIconColorMode(nextMode);
   }
 
   Future<void> _loadNotificationPreference() async {
@@ -443,24 +523,31 @@ class _MyHomePageState extends State<MyHomePage>
     return DateTime(year, month, day, hour, minute, second);
   }
 
-  void _startThemeMonitoring() {
-    _themeCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      _checkThemeChange();
-    });
-  }
+  Future<void> _checkThemeChange() async {
+    if (_trayIconColorMode != _trayIconColorModeSystem) return;
 
-  void _checkThemeChange() async {
-    if (!_followSystemTheme) return;
+    if (!mounted) return;
 
-    final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    final isDark = brightness == Brightness.dark;
+    final isDark = FluentTheme.of(context).brightness == Brightness.dark;
     
     if (isDark != _iconService.isDarkTheme) {
       _iconService.setTheme(isDark);
       _iconService.clearCache();
-      _updateTrayIcon();
+      await _updateTrayIcon();
       await _saveThemePreference();
+      await _updateTrayContextMenu();
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkThemeChange();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    _checkThemeChange();
   }
 
   Future<void> _checkLoginStatus() async {
@@ -774,7 +861,10 @@ class _MyHomePageState extends State<MyHomePage>
           MenuItem(label: "Show app", onClick: (menuItem) => _showWindow()),
           MenuItem(label: "Refresh data", onClick: (menuItem) => _updateGlucoseData()),
           MenuItem.separator(),
-          MenuItem(label: "Toggle theme", onClick: (menuItem) => _toggleTheme()),
+          MenuItem(
+            label: "Icon color: ${_trayIconModeLabel(_trayIconColorMode)}",
+            onClick: (menuItem) => _cycleTrayIconColorMode(),
+          ),
           MenuItem(label: _notificationsEnabled ? "Disable notifications" : "Enable notifications", onClick: (menuItem) => _toggleNotifications()),
           MenuItem(label: _autoStartEnabled ? "Disable auto-start" : "Enable auto-start", onClick: (menuItem) => _toggleAutoStart()),
           MenuItem.separator(),
@@ -802,15 +892,6 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
-  void _toggleTheme() async {
-    _followSystemTheme = false;
-    _iconService.setTheme(!_iconService.isDarkTheme);
-    _iconService.clearCache();
-    await _saveThemePreference();
-    setState(() {});
-    _updateTrayIcon();
-  }
-
   void _showWindow() {
     windowManager.show();
     windowManager.focus();
@@ -821,7 +902,6 @@ class _MyHomePageState extends State<MyHomePage>
     _isExiting = true;
 
     _updateTimer?.cancel();
-    _themeCheckTimer?.cancel();
     _alertTimer?.cancel();
     _relativeTimeTimer?.cancel();
     windowManager.removeListener(this);
@@ -1054,10 +1134,13 @@ class _MyHomePageState extends State<MyHomePage>
                       : _showSettings
                           ? SettingsScreen(
                               autoStartEnabled: _autoStartEnabled,
-                              isDarkTheme: _iconService.isDarkTheme,
+                              trayIconColorMode: _trayIconColorMode,
                               notificationsEnabled: _notificationsEnabled,
                               onToggleAutoStart: _toggleAutoStart,
-                              onToggleTheme: _toggleTheme,
+                              onTrayIconColorModeChanged: (mode) async {
+                                if (mode == null) return;
+                                await _setTrayIconColorMode(mode);
+                              },
                               onToggleNotifications: _toggleNotifications,
                               onRefresh: _updateGlucoseData,
                               onLogout: _logout,
@@ -1516,9 +1599,9 @@ void onWindowResize() async {
   @override
   void dispose() {
     _updateTimer?.cancel();
-    _themeCheckTimer?.cancel();
     _alertTimer?.cancel();
     _relativeTimeTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     windowManager.removeListener(this);
     trayManager.removeListener(this);
     super.dispose();

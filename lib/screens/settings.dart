@@ -2,11 +2,15 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 
 class SettingsScreen extends StatelessWidget {
+  static const String trayIconColorModeSystem = 'system';
+  static const String trayIconColorModeBlack = 'black';
+  static const String trayIconColorModeWhite = 'white';
+
   final bool autoStartEnabled;
-  final bool isDarkTheme;
+  final String trayIconColorMode;
   final bool notificationsEnabled;
   final VoidCallback onToggleAutoStart;
-  final VoidCallback onToggleTheme;
+  final ValueChanged<String?> onTrayIconColorModeChanged;
   final VoidCallback onToggleNotifications;
   final VoidCallback onRefresh;
   final VoidCallback onLogout;
@@ -15,15 +19,27 @@ class SettingsScreen extends StatelessWidget {
   const SettingsScreen({
     super.key,
     required this.autoStartEnabled,
-    required this.isDarkTheme,
+    required this.trayIconColorMode,
     required this.notificationsEnabled,
     required this.onToggleAutoStart,
-    required this.onToggleTheme,
+    required this.onTrayIconColorModeChanged,
     required this.onToggleNotifications,
     required this.onRefresh,
     required this.onLogout,
     required this.onShowAbout,
   });
+
+  String _modeLabel(String mode) {
+    switch (mode) {
+      case trayIconColorModeBlack:
+        return 'Black';
+      case trayIconColorModeWhite:
+        return 'White';
+      case trayIconColorModeSystem:
+      default:
+        return 'System';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -178,21 +194,37 @@ class SettingsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Dark icon theme',
+                        'Tray icon color',
                         style: theme.typography.body?.copyWith(
                           fontWeight: FontWeight.w400,
                         ),
                       ),
                       Text(
-                        'Use dark tray icons',
+                        'System / Black / White',
                         style: theme.typography.caption,
                       ),
                     ],
                   ),
                 ),
-                ToggleSwitch(
-                  checked: isDarkTheme,
-                  onChanged: (value) => onToggleTheme(),
+                SizedBox(
+                  width: 130,
+                  child: ComboBox<String>(
+                    value: trayIconColorMode,
+                    isExpanded: true,
+                    items: [
+                      trayIconColorModeSystem,
+                      trayIconColorModeBlack,
+                      trayIconColorModeWhite,
+                    ]
+                        .map(
+                          (mode) => ComboBoxItem<String>(
+                            value: mode,
+                            child: Text(_modeLabel(mode)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: onTrayIconColorModeChanged,
+                  ),
                 ),
               ],
             ),
