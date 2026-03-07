@@ -2,7 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
-import 'package:flutter/services.dart'; // Додайте імпорт
+import 'package:flutter/services.dart';
 import '../services/api.dart';
 
 class LogbookScreen extends StatefulWidget {
@@ -31,7 +31,6 @@ class _LogbookScreenState extends State<LogbookScreen> {
     super.dispose();
   }
 
-  // Додаємо функцію кольору як на головному екрані
   Color _getGlucoseColor(int value, double targetLow, double targetHigh) {
     const int LOW = 70;
     const int HIGH = 240;

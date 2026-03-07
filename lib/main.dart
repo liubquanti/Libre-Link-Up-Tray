@@ -394,7 +394,6 @@ class _MyHomePageState extends State<MyHomePage>
 
     bool desiredAutoStart = storedAutoStart ?? true;
     if (!userDefined && storedAutoStart == false && !kDebugMode) {
-      // Only recover when the OS still has auto-start enabled (likely written by a debug run).
       try {
         final isEnabled = await launchAtStartup.isEnabled();
         if (isEnabled) {
@@ -612,7 +611,6 @@ class _MyHomePageState extends State<MyHomePage>
         _noDataBlinkVisible = newBlinkVisible;
       });
 
-      // If glucose alert blinking is active, let it take priority.
       if (_isBlinking) return;
 
       try {
@@ -980,7 +978,7 @@ class _MyHomePageState extends State<MyHomePage>
     final theme = FluentTheme.of(context);
 
     Widget leading;
-    if (_showSettings || _showLogbook || _showAbout) { // Додаємо _showAbout
+    if (_showSettings || _showLogbook || _showAbout) {
       leading = Row(
         children: [
           IconButton(
@@ -989,7 +987,7 @@ class _MyHomePageState extends State<MyHomePage>
               setState(() {
                 if (_showAbout) {
                   _showAbout = false;
-                  _showSettings = true; // Повертає на екран налаштувань
+                  _showSettings = true;
                 } else {
                   _showSettings = false;
                   _showLogbook = false;
@@ -1140,7 +1138,7 @@ class _MyHomePageState extends State<MyHomePage>
                       onBack: () {
                         setState(() {
                           _showAbout = false;
-                          _showSettings = true; // Повертає на екран налаштувань
+                          _showSettings = true;
                         });
                       },
                     )
@@ -1436,8 +1434,8 @@ class _MyHomePageState extends State<MyHomePage>
                     data: combinedData,
                     targetLow: connection['targetLow']?.toDouble() ?? 70.0,
                     targetHigh: connection['targetHigh']?.toDouble() ?? 180.0,
-                    limitLow: lowLimit,      // додати
-                    limitHigh: highLimit,    // додати
+                    limitLow: lowLimit,
+                    limitHigh: highLimit,
                     currentValueColor: glucoseColor,
                     showChartPoints: _showChartPoints,
                   ),
@@ -1637,8 +1635,8 @@ class InteractiveGlucoseChart extends StatefulWidget {
   final List<dynamic> data;
   final double targetLow;
   final double targetHigh;
-  final double limitLow;   // додати
-  final double limitHigh;  // додати
+  final double limitLow;
+  final double limitHigh;
   final Color currentValueColor;
   final bool showChartPoints;
 
@@ -1696,17 +1694,14 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
       widget.limitHigh,
     ].reduce(math.max);
 
-    // Add margin so lines and points stay inside the viewport.
     double minValue = minCandidate - 20;
     double maxValue = maxCandidate + 20;
 
     if (maxValue - minValue < 10) {
-      // Avoid zero height chart if limits are very close.
       minValue -= 5;
       maxValue += 5;
     }
 
-    // Prevent negative scale from pushing chart off when values are low.
     if (minValue < 0) minValue = 0;
 
     final now = DateTime.now();
@@ -1743,8 +1738,8 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                   maxValue: maxValue,
                   targetLow: widget.targetLow,
                   targetHigh: widget.targetHigh,
-                  limitLow: widget.limitLow,     // додати
-                  limitHigh: widget.limitHigh,   // додати
+                  limitLow: widget.limitLow,
+                  limitHigh: widget.limitHigh,
                   isDark: FluentTheme.of(context).brightness == Brightness.dark,
                   hoveredPoint: _hoveredPoint,
                   currentValueColor: widget.currentValueColor,
@@ -2053,7 +2048,6 @@ class GlucoseChartPainter extends CustomPainter {
     canvas.drawLine(Offset(0, targetLowY), Offset(size.width, targetLowY), targetLinePaint);
     canvas.drawLine(Offset(0, targetHighY), Offset(size.width, targetHighY), targetLinePaint);
 
-    // Малюємо червоні лінії для ll та hl
     final limitLinePaint = Paint()
       ..color = Colors.orange.withOpacity(0.6)
       ..style = PaintingStyle.stroke
@@ -2096,14 +2090,20 @@ class GlucoseChartPainter extends CustomPainter {
 
     final path = Path();
     int lastValidIndex = -1;
+    const bufferDuration = Duration(minutes: 15);
+    bool firstPointAdded = false;
 
     for (int i = 0; i < positions.length; i++) {
       final ts = timestamps[i];
       
-      if (ts.isBefore(minTime) || ts.isAfter(maxTime)) {
+      final allowedMinTime = !firstPointAdded ? minTime.subtract(bufferDuration) : minTime;
+      
+      if (ts.isBefore(allowedMinTime) || ts.isAfter(maxTime)) {
         lastValidIndex = -1;
         continue;
       }
+      
+      firstPointAdded = true;
       
       if (lastValidIndex == -1) {
         path.moveTo(positions[i].dx, positions[i].dy);
@@ -2125,11 +2125,13 @@ class GlucoseChartPainter extends CustomPainter {
     paint.color = isDark ? const Color(0xFFFBFBFB) : const Color(0xFF2B2B2B);
     canvas.drawPath(path, paint);
 
-    // Render chart points (all or just the last one depending on showChartPoints)
     final validPointIndices = <int>[];
     for (int i = 0; i < positions.length; i++) {
       final timestamp = timestamps[i];
-      if (timestamp.isBefore(minTime) || timestamp.isAfter(maxTime)) {
+      final isFirstValidPoint = validPointIndices.isEmpty;
+      final allowedMinTime = isFirstValidPoint ? minTime.subtract(bufferDuration) : minTime;
+      
+      if (timestamp.isBefore(allowedMinTime) || timestamp.isAfter(maxTime)) {
         continue;
       }
       validPointIndices.add(i);
@@ -2140,7 +2142,6 @@ class GlucoseChartPainter extends CustomPainter {
       final isCurrent = data.length > i && data[i]['isCurrent'] == true;
       final isLastPoint = idx == validPointIndices.length - 1;
       
-      // Skip rendering if points are hidden and this is not the last point
       if (!showChartPoints && !isLastPoint && !isCurrent) {
         continue;
       }

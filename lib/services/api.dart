@@ -15,7 +15,7 @@ class LibreLinkService {
   String? _patientId;
   String? _userId;
 
-  bool testMode = false; // Додаємо прапор
+  bool testMode = false;
 
   Map<String, String> get _baseHeaders => {
     'accept-encoding': 'gzip',
@@ -39,7 +39,6 @@ class LibreLinkService {
   }
 
   Future<bool> login(String email, String password) async {
-    // Перевірка тестових даних
     if (email.trim().toLowerCase() == 'test@liubquanti.click' && password == '1234567890') {
       testMode = true;
       _authToken = 'test_token';
@@ -117,7 +116,6 @@ class LibreLinkService {
 
   Future<List<dynamic>?> getConnections() async {
     if (testMode) {
-      // Повертаємо тестові дані (можна взяти з testdata.json)
       return [
         {
           'patientId': 'test_patient',
@@ -223,7 +221,6 @@ class LibreLinkService {
 
   Future<List<dynamic>?> getLogbook() async {
     if (testMode) {
-      // Якщо тестовий режим, можна повернути тестові записи з локального файлу або заглушку
       return [];
     }
     if (_authToken == null || _patientId == null) return null;
@@ -268,12 +265,10 @@ class LibreLinkService {
   String? get currentPatientId => _patientId;
 
   Future<String> _loadTestData() async {
-    // Читання локального файлу
     return await Future.delayed(const Duration(milliseconds: 100), () async {
       return await DefaultAssetBundle.of(globalContext!).loadString('assets/data/testdata.json');
     });
   }
 
-  // Додаємо глобальний контекст для AssetBundle
   static BuildContext? globalContext;
 }
