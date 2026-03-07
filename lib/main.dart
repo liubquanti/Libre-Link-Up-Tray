@@ -208,6 +208,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool _pendingRecoveryNotification = false;
   bool _notificationsEnabled = true;
   bool _showChartPoints = true;
+  bool _showChartGridValues = true;
   bool _isExiting = false;
   
   @override
@@ -222,6 +223,7 @@ class _MyHomePageState extends State<MyHomePage>
       await _loadThemePreference();
       await _loadNotificationPreference();
       await _loadChartPointsPreference();
+      await _loadChartGridValuesPreference();
       await _loadAutoStartPreference();
       await _initTray();
       windowManager.addListener(this);
@@ -385,6 +387,26 @@ class _MyHomePageState extends State<MyHomePage>
       _showChartPoints = !_showChartPoints;
     });
     _saveChartPointsPreference();
+  }
+
+  Future<void> _loadChartGridValuesPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedChartGridValues = prefs.getBool('show_chart_grid_values');
+    setState(() {
+      _showChartGridValues = storedChartGridValues ?? _showChartGridValues;
+    });
+  }
+
+  Future<void> _saveChartGridValuesPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('show_chart_grid_values', _showChartGridValues);
+  }
+
+  void _toggleChartGridValues() {
+    setState(() {
+      _showChartGridValues = !_showChartGridValues;
+    });
+    _saveChartGridValuesPreference();
   }
 
   Future<void> _loadAutoStartPreference() async {
@@ -1157,6 +1179,7 @@ class _MyHomePageState extends State<MyHomePage>
                               trayIconColorMode: _trayIconColorMode,
                               notificationsEnabled: _notificationsEnabled,
                               showChartPoints: _showChartPoints,
+                              showChartGridValues: _showChartGridValues,
                               onToggleAutoStart: _toggleAutoStart,
                               onTrayIconColorModeChanged: (mode) async {
                                 if (mode == null) return;
@@ -1164,6 +1187,7 @@ class _MyHomePageState extends State<MyHomePage>
                               },
                               onToggleNotifications: _toggleNotifications,
                               onToggleChartPoints: _toggleChartPoints,
+                              onToggleChartGridValues: _toggleChartGridValues,
                               onRefresh: _updateGlucoseData,
                               onLogout: _logout,
                               onShowAbout: () {
@@ -1438,6 +1462,7 @@ class _MyHomePageState extends State<MyHomePage>
                     limitHigh: highLimit,
                     currentValueColor: glucoseColor,
                     showChartPoints: _showChartPoints,
+                    showChartGridValues: _showChartGridValues,
                   ),
                 ),
               ],
@@ -1639,6 +1664,7 @@ class InteractiveGlucoseChart extends StatefulWidget {
   final double limitHigh;
   final Color currentValueColor;
   final bool showChartPoints;
+  final bool showChartGridValues;
 
   const InteractiveGlucoseChart({
     super.key,
@@ -1649,6 +1675,7 @@ class InteractiveGlucoseChart extends StatefulWidget {
     required this.limitHigh,
     required this.currentValueColor,
     required this.showChartPoints,
+    required this.showChartGridValues,
   });
 
   @override
@@ -1744,6 +1771,7 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
                   hoveredPoint: _hoveredPoint,
                   currentValueColor: widget.currentValueColor,
                   showChartPoints: widget.showChartPoints,
+                  showChartGridValues: widget.showChartGridValues,
                 ),
               ),
             ),
@@ -1832,10 +1860,20 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
 
-    if (position.dx < 0 || position.dx > size.width) return;
+    // Calculate padding (same as in paint method)
+    final leftPadding = widget.showChartGridValues ? 20.0 : 0.0;
+    final bottomPadding = widget.showChartGridValues ? 16.0 : 0.0;
+    final topPadding = 0.0;
+    final rightPadding = 0.0;
+    
+    final chartWidth = size.width - leftPadding - rightPadding;
+    final chartHeight = size.height - topPadding - bottomPadding;
+
+    // Check if position is within chart area
+    if (position.dx < leftPadding || position.dx > leftPadding + chartWidth) return;
 
     final totalMs = math.max(1, _maxTime!.difference(_minTime!).inMilliseconds);
-    final ratio = (position.dx / size.width).clamp(0.0, 1.0);
+    final ratio = ((position.dx - leftPadding) / chartWidth).clamp(0.0, 1.0);
     final hoverTime = _minTime!.add(Duration(milliseconds: (totalMs * ratio).round()));
 
     final nearestIndex = _findNearestIndex(hoverTime);
@@ -1845,8 +1883,8 @@ class _InteractiveGlucoseChartState extends State<InteractiveGlucoseChart> {
     if (clampedTs.isBefore(_minTime!)) clampedTs = _minTime!;
     if (clampedTs.isAfter(_maxTime!)) clampedTs = _maxTime!;
 
-    final pointX = (clampedTs.difference(_minTime!).inMilliseconds / totalMs) * size.width;
-    final pointY = size.height - ((point.value - minValue) / (maxValue - minValue)) * size.height;
+    final pointX = leftPadding + (clampedTs.difference(_minTime!).inMilliseconds / totalMs) * chartWidth;
+    final pointY = topPadding + chartHeight - ((point.value - minValue) / (maxValue - minValue)) * chartHeight;
 
     setState(() {
       _hoveredPoint = Offset(pointX, pointY);
@@ -2000,6 +2038,7 @@ class GlucoseChartPainter extends CustomPainter {
   final Offset? hoveredPoint;
   final Color currentValueColor;
   final bool showChartPoints;
+  final bool showChartGridValues;
 
   GlucoseChartPainter({
     required this.points,
@@ -2017,10 +2056,145 @@ class GlucoseChartPainter extends CustomPainter {
     this.hoveredPoint,
     required this.currentValueColor,
     required this.showChartPoints,
+    required this.showChartGridValues,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Calculate padding for labels
+    final double leftPadding = showChartGridValues ? 20.0 : 0.0;
+    final double bottomPadding = showChartGridValues ? 16.0 : 0.0;
+    const double topPadding = 0.0;
+    const double rightPadding = 0.0;
+    
+    final chartWidth = size.width - leftPadding - rightPadding;
+    final chartHeight = size.height - topPadding - bottomPadding;
+
+    // Draw grid and labels first (behind everything else)
+    final gridPaint = Paint()
+      ..color = (isDark ? Colors.white : Colors.grey).withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5;
+
+    final gridLabelColor = (isDark ? Colors.white : Colors.black).withOpacity(0.65);
+    final ySteps = 5;
+    final xSteps = 6;
+    final totalWindowMs = math.max(1, maxTime.difference(minTime).inMilliseconds);
+
+    final List<double> yValueTicks;
+    if (showChartGridValues) {
+      final firstValueTick = (minValue / 70).ceil() * 70;
+      final ticks = <double>[];
+      for (double tick = firstValueTick.toDouble(); tick <= maxValue; tick += 70) {
+        ticks.add(tick);
+      }
+      yValueTicks = ticks;
+    } else {
+      yValueTicks = const <double>[];
+    }
+
+    final List<DateTime> hourTicks;
+    if (showChartGridValues) {
+      final firstHourTick = DateTime(
+        minTime.year,
+        minTime.month,
+        minTime.day,
+        minTime.hour,
+      ).add(minTime.minute == 0 && minTime.second == 0 && minTime.millisecond == 0 && minTime.microsecond == 0
+          ? Duration.zero
+          : const Duration(hours: 1));
+
+      final ticks = <DateTime>[];
+      DateTime tick = firstHourTick;
+      while (!tick.isAfter(maxTime)) {
+        ticks.add(tick);
+        tick = tick.add(const Duration(hours: 2));
+      }
+      hourTicks = ticks;
+    } else {
+      hourTicks = const <DateTime>[];
+    }
+
+    // Draw labels behind grid
+    if (showChartGridValues) {
+
+      for (final valueAtLine in yValueTicks) {
+        final y = topPadding + chartHeight - ((valueAtLine - minValue) / (maxValue - minValue)) * chartHeight;
+        final yLabel = valueAtLine.toStringAsFixed(0);
+        final yLabelPainter = TextPainter(
+          text: TextSpan(
+            text: yLabel,
+            style: TextStyle(
+              color: gridLabelColor,
+              fontSize: 10,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: leftPadding);
+
+        final yLabelX = 0.0;
+        final yLabelY = (y - (yLabelPainter.height / 2)).clamp(0.0, size.height - yLabelPainter.height);
+        yLabelPainter.paint(canvas, Offset(yLabelX, yLabelY));
+      }
+
+      for (final labelTime in hourTicks) {
+        final tickMs = labelTime.difference(minTime).inMilliseconds;
+        final x = leftPadding + (tickMs / totalWindowMs) * chartWidth;
+        final xLabel = '${labelTime.hour.toString().padLeft(2, '0')}:${labelTime.minute.toString().padLeft(2, '0')}';
+        final xLabelPainter = TextPainter(
+          text: TextSpan(
+            text: xLabel,
+            style: TextStyle(
+              color: gridLabelColor,
+              fontSize: 10,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: size.width);
+
+        final xLabelX = (x - (xLabelPainter.width / 2)).clamp(leftPadding, size.width - xLabelPainter.width);
+        final xLabelY = size.height - bottomPadding + 2;
+        xLabelPainter.paint(canvas, Offset(xLabelX, xLabelY));
+      }
+    }
+
+    // Draw grid lines
+    if (showChartGridValues && yValueTicks.isNotEmpty) {
+      canvas.drawLine(Offset(leftPadding, topPadding), Offset(leftPadding + chartWidth, topPadding), gridPaint);
+      canvas.drawLine(Offset(leftPadding, topPadding + chartHeight), Offset(leftPadding + chartWidth, topPadding + chartHeight), gridPaint);
+
+      for (final valueAtLine in yValueTicks) {
+        if (valueAtLine <= minValue || valueAtLine >= maxValue) {
+          continue;
+        }
+
+        final y = topPadding + chartHeight - ((valueAtLine - minValue) / (maxValue - minValue)) * chartHeight;
+        canvas.drawLine(Offset(leftPadding, y), Offset(leftPadding + chartWidth, y), gridPaint);
+      }
+    } else {
+      for (int i = 0; i <= ySteps; i++) {
+        final y = topPadding + (chartHeight / ySteps) * i;
+        canvas.drawLine(Offset(leftPadding, y), Offset(leftPadding + chartWidth, y), gridPaint);
+      }
+    }
+
+    if (showChartGridValues && hourTicks.isNotEmpty) {
+      canvas.drawLine(Offset(leftPadding, topPadding), Offset(leftPadding, topPadding + chartHeight), gridPaint);
+      canvas.drawLine(Offset(leftPadding + chartWidth, topPadding), Offset(leftPadding + chartWidth, topPadding + chartHeight), gridPaint);
+
+      for (final tick in hourTicks) {
+        final tickMs = tick.difference(minTime).inMilliseconds;
+        final x = leftPadding + (tickMs / totalWindowMs) * chartWidth;
+        canvas.drawLine(Offset(x, topPadding), Offset(x, topPadding + chartHeight), gridPaint);
+      }
+    } else {
+      for (int i = 0; i <= xSteps; i++) {
+        final x = leftPadding + (chartWidth / xSteps) * i;
+        canvas.drawLine(Offset(x, topPadding), Offset(x, topPadding + chartHeight), gridPaint);
+      }
+    }
+
+    // Now draw chart elements on top
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
@@ -2032,11 +2206,11 @@ class GlucoseChartPainter extends CustomPainter {
       ..color = SystemTheme.accentColor.accent.withOpacity(0.3)
       ..style = PaintingStyle.fill;
 
-    final targetLowY = size.height - ((targetLow - minValue) / (maxValue - minValue)) * size.height;
-    final targetHighY = size.height - ((targetHigh - minValue) / (maxValue - minValue)) * size.height;
+    final targetLowY = topPadding + chartHeight - ((targetLow - minValue) / (maxValue - minValue)) * chartHeight;
+    final targetHighY = topPadding + chartHeight - ((targetHigh - minValue) / (maxValue - minValue)) * chartHeight;
 
     canvas.drawRect(
-      Rect.fromLTRB(0, targetHighY, size.width, targetLowY),
+      Rect.fromLTRB(leftPadding, targetHighY, leftPadding + chartWidth, targetLowY),
       targetRange,
     );
 
@@ -2045,23 +2219,23 @@ class GlucoseChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    canvas.drawLine(Offset(0, targetLowY), Offset(size.width, targetLowY), targetLinePaint);
-    canvas.drawLine(Offset(0, targetHighY), Offset(size.width, targetHighY), targetLinePaint);
+    canvas.drawLine(Offset(leftPadding, targetLowY), Offset(leftPadding + chartWidth, targetLowY), targetLinePaint);
+    canvas.drawLine(Offset(leftPadding, targetHighY), Offset(leftPadding + chartWidth, targetHighY), targetLinePaint);
 
     final limitLinePaint = Paint()
       ..color = Colors.orange.withOpacity(0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
-    final limitLowY = size.height - ((limitLow - minValue) / (maxValue - minValue)) * size.height;
-    final limitHighY = size.height - ((limitHigh - minValue) / (maxValue - minValue)) * size.height;
+    final limitLowY = topPadding + chartHeight - ((limitLow - minValue) / (maxValue - minValue)) * chartHeight;
+    final limitHighY = topPadding + chartHeight - ((limitHigh - minValue) / (maxValue - minValue)) * chartHeight;
 
     final limitLowPath = Path()
-      ..moveTo(0, limitLowY)
-      ..lineTo(size.width, limitLowY);
+      ..moveTo(leftPadding, limitLowY)
+      ..lineTo(leftPadding + chartWidth, limitLowY);
     final limitHighPath = Path()
-      ..moveTo(0, limitHighY)
-      ..lineTo(size.width, limitHighY);
+      ..moveTo(leftPadding, limitHighY)
+      ..lineTo(leftPadding + chartWidth, limitHighY);
 
     canvas.drawPath(
       dashPath(limitLowPath, dashArray: CircularIntervalList<double>(<double>[6, 4])),
@@ -2083,8 +2257,8 @@ class GlucoseChartPainter extends CustomPainter {
       if (ts.isAfter(maxTime)) ts = maxTime;
 
       final timeOffset = ts.difference(minTime).inMilliseconds;
-      final x = (timeOffset / totalMs) * size.width;
-      final y = size.height - ((points[i] - minValue) / (maxValue - minValue)) * size.height;
+      final x = leftPadding + (timeOffset / totalMs) * chartWidth;
+      final y = topPadding + chartHeight - ((points[i] - minValue) / (maxValue - minValue)) * chartHeight;
       positions.add(Offset(x, y));
     }
 
@@ -2187,25 +2361,10 @@ class GlucoseChartPainter extends CustomPainter {
         ..strokeWidth = 1;
       
       canvas.drawLine(
-        Offset(hoveredPoint!.dx, 0),
-        Offset(hoveredPoint!.dx, size.height),
+        Offset(hoveredPoint!.dx, topPadding),
+        Offset(hoveredPoint!.dx, topPadding + chartHeight),
         hoverLinePaint,
       );
-    }
-
-    final gridPaint = Paint()
-      ..color = (isDark ? Colors.white : Colors.grey).withOpacity(0.2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-
-    for (int i = 0; i <= 5; i++) {
-      final y = (size.height / 5) * i;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    for (int i = 0; i <= 6; i++) {
-      final x = (size.width / 6) * i;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
     }
   }
 
