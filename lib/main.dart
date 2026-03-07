@@ -2254,7 +2254,12 @@ String formatApiDate(String apiDate) {
     }
 
     final hours = diff.inHours;
-    return hours == 1 ? '1 hour ago' : '$hours hours ago';
+    if (hours < 24) {
+      return hours == 1 ? '1 hour ago' : '$hours hours ago';
+    }
+
+    final days = diff.inDays;
+    return days == 1 ? '1 day ago' : '$days days ago';
   } catch (e) {
     print('Date parse error: $e');
   }
