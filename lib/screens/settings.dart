@@ -200,7 +200,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'System / Black / White',
+                        'Color of glucose value in tray',
                         style: theme.typography.caption,
                       ),
                     ],
