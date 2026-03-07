@@ -88,6 +88,51 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
+  Timer? _accentColorTimer;
+  int? _accentSignature;
+
+  @override
+  void initState() {
+    super.initState();
+    _accentSignature = _buildAccentSignature();
+    _startAccentColorMonitoring();
+  }
+
+  void _startAccentColorMonitoring() {
+    if (!defaultTargetPlatform.supportsAccentColor) return;
+
+    _accentColorTimer?.cancel();
+    _accentColorTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      await SystemTheme.accentColor.load();
+      if (!mounted) return;
+
+      final nextSignature = _buildAccentSignature();
+      if (nextSignature != _accentSignature) {
+        setState(() {
+          _accentSignature = nextSignature;
+        });
+      }
+    });
+  }
+
+  int _buildAccentSignature() {
+    return Object.hashAll([
+      SystemTheme.accentColor.darkest.value,
+      SystemTheme.accentColor.darker.value,
+      SystemTheme.accentColor.dark.value,
+      SystemTheme.accentColor.accent.value,
+      SystemTheme.accentColor.light.value,
+      SystemTheme.accentColor.lighter.value,
+      SystemTheme.accentColor.lightest.value,
+    ]);
+  }
+
+  @override
+  void dispose() {
+    _accentColorTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     LibreLinkService.globalContext = context;
