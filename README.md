@@ -33,3 +33,5 @@ Windows system tray app to check glucose with LibreLinkUp API.
 ## 📊 • Development Stats
 
 ![Alt](https://repobeats.axiom.co/api/embed/32ad07bd1bf7e3a094e57900f8d8d65bc73559cb.svg "Repobeats analytics image")
+
+> This app was developed in the name of Lisa.
